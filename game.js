@@ -347,17 +347,20 @@ function drawNextPiece() {
   const rows = matrix.length;
   const cols = matrix[0].length;
 
-  // Centrar la pieza en el canvas 120×120
-  const offsetX = Math.floor((nextCanvas.width  / NEXT_BLOCK - cols) / 2);
-  const offsetY = Math.floor((nextCanvas.height / NEXT_BLOCK - rows) / 2);
+  // Centrado en píxeles — soporta pieza I (4×4) sin perder el medio bloque de offset
+  const pxOffsetX = Math.floor((nextCanvas.width  - cols * NEXT_BLOCK) / 2);
+  const pxOffsetY = Math.floor((nextCanvas.height - rows * NEXT_BLOCK) / 2);
 
+  nextCtx.save();
+  nextCtx.translate(pxOffsetX, pxOffsetY);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (matrix[r][c]) {
-        drawBlock(nextCtx, offsetX + c, offsetY + r, COLORS[colorIdx], NEXT_BLOCK);
+        drawBlock(nextCtx, c, r, COLORS[colorIdx], NEXT_BLOCK);
       }
     }
   }
+  nextCtx.restore();
 }
 
 // ── HUD ───────────────────────────────────────────────────────

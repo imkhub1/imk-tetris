@@ -7,9 +7,31 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <!-- Start Screen -->
+    <div id="start-screen" class="start-screen">
+      <h1 class="start-title">IMK-TETRIS</h1>
+      <div class="hs-section">
+        <p class="hs-heading">HIGH SCORES</p>
+        <table class="hs-table" id="start-hs-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>NAME</th>
+              <th>SCORE</th>
+              <th>LINES</th>
+              <th>COMBO</th>
+            </tr>
+          </thead>
+          <tbody id="start-hs-body"></tbody>
+        </table>
+      </div>
+      <p class="press-enter">PRESS ENTER TO PLAY</p>
+      <button class="reset-btn" id="start-reset-btn">Reset Records</button>
+    </div>
+
     <div class="container">
 
-      <!-- Panel izquierdo: info del juego -->
+      <!-- Left panel: game info -->
       <aside class="panel panel-left">
         <h1 class="title">IMK-TETRIS</h1>
 
@@ -25,15 +47,47 @@
           <span class="label">LEVEL</span>
           <span class="value" id="level">1</span>
         </div>
+        <div class="info-block">
+          <span class="label">COMBO</span>
+          <span class="value" id="combo">0</span>
+        </div>
       </aside>
 
-      <!-- Tablero principal -->
+      <!-- Main board -->
       <main class="board-wrapper">
         <canvas id="board" width="300" height="600"></canvas>
 
         <!-- Overlay: Game Over -->
         <div id="overlay" class="overlay hidden">
           <p id="overlay-title" class="overlay-title"></p>
+
+          <!-- Name entry (shown when qualifying for top 5) -->
+          <div id="name-entry" class="name-entry hidden">
+            <p class="name-label">NEW HIGH SCORE!</p>
+            <div class="name-input-row">
+              <input id="name-input" class="name-input" type="text" maxlength="3" placeholder="AAA" autocomplete="off" />
+              <button id="name-save-btn" class="name-save-btn">SAVE</button>
+            </div>
+          </div>
+
+          <!-- High scores table in overlay -->
+          <div id="overlay-hs-section" class="hs-section hidden">
+            <p class="hs-heading">HIGH SCORES</p>
+            <table class="hs-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>NAME</th>
+                  <th>SCORE</th>
+                  <th>LINES</th>
+                  <th>COMBO</th>
+                </tr>
+              </thead>
+              <tbody id="overlay-hs-body"></tbody>
+            </table>
+            <button class="reset-btn" id="overlay-reset-btn">Reset Records</button>
+          </div>
+
           <p id="overlay-sub" class="overlay-sub"></p>
         </div>
 
@@ -68,7 +122,7 @@
         </div>
       </main>
 
-      <!-- Panel derecho: siguiente pieza + controles -->
+      <!-- Right panel: next piece + controls -->
       <aside class="panel panel-right">
         <div class="info-block">
           <span class="label">NEXT</span>
@@ -84,6 +138,16 @@
             <li><kbd>Space</kbd> Hard Drop</li>
             <li><kbd>P</kbd> Pause</li>
           </ul>
+        </div>
+
+        <div class="skin-selector">
+          <span class="label">SKIN</span>
+          <div class="skin-btns">
+            <button class="skin-btn active" data-skin="retro">Retro</button>
+            <button class="skin-btn" data-skin="neon">Neon</button>
+            <button class="skin-btn" data-skin="pastel">Pastel</button>
+            <button class="skin-btn" data-skin="pixel">Pixel</button>
+          </div>
         </div>
 
         <button id="theme-toggle" class="theme-btn">&#9728; LIGHT</button>

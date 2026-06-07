@@ -203,6 +203,172 @@ kbd {
   50% { opacity: 0; }
 }
 
+/* ---------- Start screen ---------- */
+.start-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  z-index: 100;
+}
+
+.start-screen.hidden {
+  display: none;
+}
+
+.start-title {
+  font-size: 1.4rem;
+  letter-spacing: 6px;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  text-align: center;
+  line-height: 1.8;
+}
+
+.press-enter {
+  font-size: .5rem;
+  color: var(--accent2);
+  text-shadow: var(--glow2);
+  letter-spacing: 2px;
+  animation: blink 1.2s step-start infinite;
+}
+
+/* ---------- High-scores section ---------- */
+.hs-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.hs-heading {
+  font-size: .5rem;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-shadow: var(--glow);
+}
+
+.hs-table {
+  border-collapse: collapse;
+  font-size: .38rem;
+  min-width: 280px;
+}
+
+.hs-table th,
+.hs-table td {
+  padding: 5px 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 1px;
+}
+
+.hs-table th {
+  color: var(--muted);
+  font-size: .35rem;
+}
+
+.hs-table td {
+  color: var(--text);
+}
+
+.hs-table tr.hs-new td {
+  color: var(--accent2);
+  text-shadow: var(--glow2);
+}
+
+/* ---------- Reset button ---------- */
+.reset-btn {
+  font-family: var(--font);
+  font-size: .35rem;
+  letter-spacing: 2px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 5px 10px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: color .2s, border-color .2s;
+}
+
+.reset-btn:hover {
+  color: var(--accent2);
+  border-color: var(--accent2);
+}
+
+/* ---------- Name entry ---------- */
+.name-entry {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.name-entry.hidden {
+  display: none;
+}
+
+.name-label {
+  font-size: .5rem;
+  color: var(--accent2);
+  text-shadow: var(--glow2);
+  letter-spacing: 2px;
+}
+
+.name-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.name-input {
+  font-family: var(--font);
+  font-size: .65rem;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 6px 10px;
+  width: 60px;
+  text-align: center;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.name-input::placeholder {
+  color: var(--muted);
+}
+
+.name-save-btn {
+  font-family: var(--font);
+  font-size: .38rem;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  background: transparent;
+  border: 1px solid var(--accent2);
+  border-radius: 2px;
+  padding: 6px 10px;
+  cursor: pointer;
+  text-shadow: var(--glow2);
+  transition: background .2s;
+}
+
+.name-save-btn:hover {
+  background: rgba(255, 45, 120, .15);
+}
+
+/* ---------- Overlay high-scores section ---------- */
+#overlay-hs-section.hidden {
+  display: none;
+}
+
 /* ---------- Theme toggle button ---------- */
 .theme-btn {
   font-family: var(--font);
@@ -318,4 +484,45 @@ kbd {
   text-shadow: var(--glow);
   min-width: 2ch;
   text-align: center;
+}
+
+/* ---------- Skin selector ---------- */
+.skin-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skin-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.skin-btn {
+  font-family: var(--font);
+  font-size: .38rem;
+  letter-spacing: 1px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 5px 8px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  transition: border-color .2s, color .2s, box-shadow .2s;
+}
+
+.skin-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.skin-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  text-shadow: var(--glow);
+  box-shadow: 0 0 6px rgba(0,245,255,.2);
 }

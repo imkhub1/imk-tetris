@@ -74,6 +74,18 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlaySub   = document.getElementById('overlay-sub');
 const themeToggle  = document.getElementById('theme-toggle');
 
+const startOverlay      = document.getElementById('start-overlay');
+const startScoresBody   = document.getElementById('start-scores-body');
+const startResetBtn     = document.getElementById('start-reset-btn');
+
+const nameEntry         = document.getElementById('name-entry');
+const nameInput         = document.getElementById('name-input');
+const saveBtn           = document.getElementById('save-btn');
+
+const gameoverScoresContainer = document.getElementById('gameover-scores-container');
+const gameoverScoresBody      = document.getElementById('gameover-scores-body');
+const gameoverResetBtn        = document.getElementById('gameover-reset-btn');
+
 // ── Estado del juego ──────────────────────────────────────────
 let board;        // matriz ROWS × COLS
 let current;      // { matrix, x, y, colorIdx }
@@ -87,6 +99,94 @@ let accumulated;  // tiempo acumulado desde la última bajada
 let paused;
 let gameOver;
 let animId;       // requestAnimationFrame handle
+let gameStarted;  // false until player presses Enter on start screen
+
+// ── Combo tracking ────────────────────────────────────────────
+let combo;
+let maxCombo;
+let maxLinesCleared;
+
+// ── localStorage helpers ──────────────────────────────────────
+const HS_KEY = 'imktetris.highscores';
+
+function loadHighScores() {
+  try {
+    const raw = localStorage.getItem(HS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed;
+    return [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveHighScores(scores) {
+  try {
+    localStorage.setItem(HS_KEY, JSON.stringify(scores));
+  } catch (e) {
+    // ignore quota / security errors
+  }
+}
+
+function qualifiesForTop5(currentScore) {
+  const scores = loadHighScores();
+  if (scores.length < 5) return true;
+  return currentScore > scores[scores.length - 1].score;
+}
+
+function insertHighScore(name, currentScore, currentLines, currentMaxCombo) {
+  const scores = loadHighScores();
+  const entry = {
+    name: (name || 'AAA').toUpperCase().padEnd(3, ' ').slice(0, 3),
+    score: currentScore,
+    lines: currentLines,
+    combo: currentMaxCombo,
+  };
+  scores.push(entry);
+  scores.sort((a, b) => b.score - a.score);
+  const top5 = scores.slice(0, 5);
+  saveHighScores(top5);
+  return top5;
+}
+
+function resetRecords() {
+  try {
+    localStorage.removeItem(HS_KEY);
+  } catch (e) {
+    // ignore
+  }
+  renderScoresTable(startScoresBody, loadHighScores(), -1);
+  renderScoresTable(gameoverScoresBody, loadHighScores(), -1);
+}
+
+// ── Render scores table ───────────────────────────────────────
+function renderScoresTable(tbody, scores, highlightScore) {
+  tbody.innerHTML = '';
+  if (!scores || scores.length === 0) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 5;
+    td.className = 'no-records';
+    td.textContent = 'No records yet';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+  scores.forEach((entry, i) => {
+    const tr = document.createElement('tr');
+    // highlight the newly inserted score
+    if (highlightScore >= 0 && entry.score === highlightScore && i === scores.findIndex(e => e.score === highlightScore)) {
+      tr.classList.add('highlight');
+    }
+    [i + 1, entry.name, entry.score, entry.lines, entry.combo].forEach(val => {
+      const td = document.createElement('td');
+      td.textContent = val;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
 
 // ── Inicialización ────────────────────────────────────────────
 function init() {
@@ -99,6 +199,9 @@ function init() {
   accumulated = 0;
   paused      = false;
   gameOver    = false;
+  combo       = 0;
+  maxCombo    = 0;
+  maxLinesCleared = 0;
 
   updateHUD();
   hideOverlay();
@@ -216,7 +319,10 @@ function lockPiece() {
       board[ny][x + c] = matrix[r][c];
     }
   }
-  clearLines();
+  const clearedCount = clearLines();
+  if (clearedCount === 0) {
+    combo = 0;
+  }
   spawn();
 }
 
@@ -231,13 +337,18 @@ function clearLines() {
       r++; // revisa la misma fila (ahora contiene la que estaba encima)
     }
   }
-  if (cleared === 0) return;
+  if (cleared === 0) return 0;
+
+  combo++;
+  maxCombo = Math.max(maxCombo, combo);
+  maxLinesCleared = Math.max(maxLinesCleared, cleared);
 
   lines += cleared;
   score += LINE_SCORES[cleared] * level;
   level  = Math.floor(lines / 10) + 1;
   dropInterval = calcDropInterval(level);
   updateHUD();
+  return cleared;
 }
 
 // ── Velocidad de caída ────────────────────────────────────────
@@ -384,11 +495,56 @@ function hideOverlay() {
   overlay.classList.add('hidden');
 }
 
+// ── Start Screen ──────────────────────────────────────────────
+function showStartScreen() {
+  gameStarted = false;
+  gameOver    = false;
+  paused      = false;
+
+  const scores = loadHighScores();
+  renderScoresTable(startScoresBody, scores, -1);
+
+  startOverlay.classList.remove('hidden');
+}
+
 // ── Game Over ─────────────────────────────────────────────────
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
-  showOverlay('GAME OVER', 'Press ENTER to restart');
+
+  const qualifies = qualifiesForTop5(score);
+
+  // Show name entry if score qualifies, sub text changes after save
+  if (qualifies) {
+    showOverlay('GAME OVER', '');
+    overlaySub.classList.add('hidden');
+    nameEntry.classList.remove('hidden');
+    nameInput.value = '';
+    nameInput.focus();
+    // Hide scores table until saved
+    gameoverScoresContainer.classList.add('hidden');
+    gameoverResetBtn.classList.add('hidden');
+  } else {
+    showOverlay('GAME OVER', 'PRESS ENTER TO RESTART');
+    nameEntry.classList.add('hidden');
+    // Show scores immediately
+    renderScoresTable(gameoverScoresBody, loadHighScores(), -1);
+    gameoverScoresContainer.classList.remove('hidden');
+    gameoverResetBtn.classList.remove('hidden');
+  }
+}
+
+function saveScore() {
+  const rawName = nameInput.value.trim() || 'AAA';
+  const newScores = insertHighScore(rawName, score, lines, maxCombo);
+
+  nameEntry.classList.add('hidden');
+  overlaySub.textContent = 'PRESS ENTER TO RESTART';
+  overlaySub.classList.remove('hidden');
+
+  renderScoresTable(gameoverScoresBody, newScores, score);
+  gameoverScoresContainer.classList.remove('hidden');
+  gameoverResetBtn.classList.remove('hidden');
 }
 
 // ── Pausa ─────────────────────────────────────────────────────
@@ -445,10 +601,44 @@ function toggleTheme() {
 
 themeToggle.addEventListener('click', toggleTheme);
 
+// ── Reset records ─────────────────────────────────────────────
+startResetBtn.addEventListener('click', resetRecords);
+gameoverResetBtn.addEventListener('click', resetRecords);
+
+// ── Save button ───────────────────────────────────────────────
+saveBtn.addEventListener('click', saveScore);
+
+// Force uppercase on name input
+nameInput.addEventListener('input', () => {
+  const pos = nameInput.selectionStart;
+  nameInput.value = nameInput.value.toUpperCase();
+  nameInput.setSelectionRange(pos, pos);
+});
+
 // ── Controles de teclado ──────────────────────────────────────
 document.addEventListener('keydown', (e) => {
+  // Start screen: Enter to begin
+  if (!gameStarted && !gameOver) {
+    if (e.code === 'Enter') {
+      startOverlay.classList.add('hidden');
+      gameStarted = true;
+      init();
+    }
+    return;
+  }
+
+  // Name input focused: Enter to save
+  if (gameOver && document.activeElement === nameInput && e.code === 'Enter') {
+    e.preventDefault();
+    saveScore();
+    return;
+  }
+
   if (gameOver) {
-    if (e.code === 'Enter') init();
+    // Only allow restart if name entry is done (hidden)
+    if (e.code === 'Enter' && nameEntry.classList.contains('hidden')) {
+      init();
+    }
     return;
   }
 
@@ -481,4 +671,4 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ── Arrancar ──────────────────────────────────────────────────
-init();
+showStartScreen();

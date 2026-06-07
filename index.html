@@ -31,10 +31,62 @@
       <main class="board-wrapper">
         <canvas id="board" width="300" height="600"></canvas>
 
+        <!-- Start screen overlay -->
+        <div id="start-overlay" class="overlay">
+          <p class="overlay-title">IMK-TETRIS</p>
+          <div id="start-scores-container" class="scores-container">
+            <table class="scores-table" id="start-scores-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>NAME</th>
+                  <th>SCORE</th>
+                  <th>LINES</th>
+                  <th>COMBO</th>
+                </tr>
+              </thead>
+              <tbody id="start-scores-body">
+                <tr><td colspan="5" class="no-records">No records yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="overlay-sub">PRESS ENTER TO PLAY</p>
+          <button id="start-reset-btn" class="theme-btn reset-btn">RESET RECORDS</button>
+        </div>
+
         <!-- Overlay: Pausa / Game Over -->
         <div id="overlay" class="overlay hidden">
           <p id="overlay-title" class="overlay-title"></p>
           <p id="overlay-sub" class="overlay-sub"></p>
+
+          <!-- Name entry (shown when score qualifies) -->
+          <div id="name-entry" class="name-entry hidden">
+            <p class="name-entry-label">NEW HIGH SCORE!</p>
+            <div class="name-entry-row">
+              <input id="name-input" type="text" maxlength="3" placeholder="AAA" class="name-input" autocomplete="off" />
+              <button id="save-btn" class="theme-btn save-btn">SAVE</button>
+            </div>
+          </div>
+
+          <!-- Scores table in game-over overlay -->
+          <div id="gameover-scores-container" class="scores-container hidden">
+            <table class="scores-table" id="gameover-scores-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>NAME</th>
+                  <th>SCORE</th>
+                  <th>LINES</th>
+                  <th>COMBO</th>
+                </tr>
+              </thead>
+              <tbody id="gameover-scores-body">
+                <tr><td colspan="5" class="no-records">No records yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <button id="gameover-reset-btn" class="theme-btn reset-btn hidden">RESET RECORDS</button>
         </div>
       </main>
 

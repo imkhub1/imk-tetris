@@ -421,6 +421,9 @@ function loop(timestamp) {
     }
   }
 
+  // Si la partida terminó (o se pausó) durante este tick, no reprogramar.
+  if (gameOver || paused) return;
+
   draw();
   animId = requestAnimationFrame(loop);
 }

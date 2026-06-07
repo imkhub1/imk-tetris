@@ -82,7 +82,7 @@ tetris/
 Define la estructura visual:
 - Un `<canvas id="board">` de **300 × 600** px (tablero principal).
 - Un `<canvas id="next">` de **120 × 120** px (vista previa).
-- Panel lateral con score, lines, level y controles.
+- Paneles laterales con score/lines/level y vista previa de la siguiente pieza.
 - Overlay para pausa y game over.
 
 ### `style.css`

@@ -1,0 +1,186 @@
+/* ============================================================
+   TETRIS – Dark Retro Arcade Theme
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* ---------- Reset & base ---------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg:        #0d0d0f;
+  --surface:   #16161e;
+  --border:    #2a2a40;
+  --accent:    #00f5ff;
+  --accent2:   #ff2d78;
+  --text:      #e0e0e0;
+  --muted:     #555577;
+  --font:      'Press Start 2P', monospace;
+  --glow:      0 0 8px var(--accent), 0 0 20px rgba(0,245,255,.25);
+  --glow2:     0 0 8px var(--accent2), 0 0 20px rgba(255,45,120,.25);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  overflow: hidden;
+
+  /* Subtle grid background */
+  background-image:
+    linear-gradient(rgba(0,245,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,245,255,.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* ---------- Container ---------- */
+.container {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 140px;
+}
+
+/* ---------- Title ---------- */
+.title {
+  font-size: 1.2rem;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ---------- Info blocks ---------- */
+.info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: .45rem;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.value {
+  font-size: 1rem;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  min-height: 1.2em;
+}
+
+/* ---------- Board wrapper ---------- */
+.board-wrapper {
+  position: relative;
+  border: 2px solid var(--border);
+  box-shadow: var(--glow), inset 0 0 40px rgba(0,0,0,.6);
+  border-radius: 2px;
+}
+
+#board {
+  display: block;
+  background-color: var(--surface);
+}
+
+/* ---------- Next piece canvas ---------- */
+#next {
+  display: block;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  margin-top: 4px;
+}
+
+/* ---------- Controls ---------- */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controls ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.controls li {
+  font-size: .4rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 4px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-family: var(--font);
+  font-size: .4rem;
+  color: var(--accent);
+  background: rgba(0,245,255,.05);
+  white-space: nowrap;
+}
+
+/* ---------- Overlay ---------- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(13,13,15,.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  z-index: 10;
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.overlay-title {
+  font-size: .9rem;
+  color: var(--accent2);
+  text-shadow: var(--glow2);
+  text-align: center;
+  line-height: 2;
+  letter-spacing: 2px;
+}
+
+.overlay-sub {
+  font-size: .45rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 2;
+  letter-spacing: 1px;
+  animation: blink 1.2s step-start infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}

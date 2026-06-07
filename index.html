@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tetris</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+
+      <!-- Panel izquierdo: info del juego -->
+      <aside class="panel panel-left">
+        <h1 class="title">TETRIS</h1>
+
+        <div class="info-block">
+          <span class="label">SCORE</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="info-block">
+          <span class="label">LINES</span>
+          <span class="value" id="lines">0</span>
+        </div>
+        <div class="info-block">
+          <span class="label">LEVEL</span>
+          <span class="value" id="level">1</span>
+        </div>
+      </aside>
+
+      <!-- Tablero principal -->
+      <main class="board-wrapper">
+        <canvas id="board" width="300" height="600"></canvas>
+
+        <!-- Overlay: Pausa / Game Over -->
+        <div id="overlay" class="overlay hidden">
+          <p id="overlay-title" class="overlay-title"></p>
+          <p id="overlay-sub" class="overlay-sub"></p>
+        </div>
+      </main>
+
+      <!-- Panel derecho: siguiente pieza + controles -->
+      <aside class="panel panel-right">
+        <div class="info-block">
+          <span class="label">NEXT</span>
+          <canvas id="next" width="120" height="120"></canvas>
+        </div>
+
+        <div class="controls">
+          <span class="label">CONTROLES</span>
+          <ul>
+            <li><kbd>←</kbd><kbd>→</kbd> Mover</li>
+            <li><kbd>↑</kbd> Rotar</li>
+            <li><kbd>↓</kbd> Bajar</li>
+            <li><kbd>Space</kbd> Drop</li>
+            <li><kbd>P</kbd> Pausa</li>
+          </ul>
+        </div>
+      </aside>
+
+    </div>
+
+    <script src="game.js"></script>
+  </body>
+</html>

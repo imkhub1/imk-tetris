@@ -1,0 +1,170 @@
+# 🎮 Tetris
+
+Implementación del clásico **Tetris** en JavaScript vanilla, usando HTML5 Canvas y CSS. Sin dependencias externas, sin frameworks, sin proceso de build: solo abrir y jugar.
+
+![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-orange)
+![CSS3](https://img.shields.io/badge/CSS3-blueviolet)
+![JavaScript Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
+
+---
+
+## ¿Qué incluye?
+
+- Tablero de **10 × 20** celdas.
+- Las **7 piezas estándar** (I, O, T, S, Z, J, L) con colores diferenciados.
+- **Rotación** con *wall kicks* (±1, ±2 columnas para rotar cerca de paredes).
+- **Soft drop** (bajada acelerada) y **Hard drop** (caída instantánea).
+- **Pieza fantasma** (*ghost piece*): muestra dónde aterrizará la pieza.
+- **Vista previa** de la siguiente pieza.
+- **Sistema de puntuación** clásico (100 / 300 / 500 / 800 × nivel).
+- **Niveles** que suben cada 10 líneas y aceleran la caída.
+- **Pausa** y **Game Over** con opción de reinicio.
+
+---
+
+## Cómo ejecutar
+
+No hay nada que instalar. Tienes dos opciones:
+
+### Opción 1: abrir directamente
+
+```bash
+open index.html        # macOS
+xdg-open index.html    # Linux
+start index.html       # Windows
+```
+
+### Opción 2: servidor local (recomendado)
+
+```bash
+# Python 3
+python3 -m http.server 8000
+
+# Node.js
+npx serve .
+
+# PHP
+php -S localhost:8000
+```
+
+Luego abre `http://localhost:8000` en el navegador.
+
+---
+
+## Controles
+
+| Tecla         | Acción                             |
+| ------------- | ---------------------------------- |
+| `←` / `→`    | Mover horizontalmente              |
+| `↑` o `X`    | Rotar en sentido horario           |
+| `↓`           | Soft drop (bajar más rápido)       |
+| `Espacio`     | Hard drop (caída instantánea)      |
+| `P`           | Pausar / reanudar                  |
+| `Enter`       | Reiniciar (en Game Over)           |
+
+---
+
+## Estructura del proyecto
+
+```
+tetris/
+├── index.html    # Estructura del DOM y canvas
+├── style.css     # Estilos (dark retro arcade theme)
+├── game.js       # Lógica completa del juego
+└── README.md
+```
+
+---
+
+## Cómo funciona
+
+### `index.html`
+Define la estructura visual:
+- Un `<canvas id="board">` de **300 × 600** px (tablero principal).
+- Un `<canvas id="next">` de **120 × 120** px (vista previa).
+- Panel lateral con score, lines, level y controles.
+- Overlay para pausa y game over.
+
+### `style.css`
+Estética *dark retro arcade*:
+- Variables CSS para colores y efectos de neón.
+- Tipografía `Press Start 2P` (pixel art).
+- Efectos glow con `text-shadow` y `box-shadow`.
+- Grid de fondo sutil.
+
+### `game.js`
+Contiene toda la lógica (~300 líneas):
+
+| Función         | Responsabilidad                                     |
+|-----------------|-----------------------------------------------------|
+| `init()`        | Reinicia el estado completo del juego               |
+| `createBoard()` | Crea la matriz ROWS × COLS llena de ceros           |
+| `spawn()`       | Coloca la siguiente pieza como activa               |
+| `collide()`     | Detecta colisiones con paredes y bloques fijados    |
+| `rotateCW()`    | Rota una matriz 90° en sentido horario              |
+| `tryRotate()`   | Intenta rotar con wall kicks                        |
+| `lockPiece()`   | Fija la pieza en el tablero                         |
+| `clearLines()`  | Elimina líneas completas y actualiza puntaje        |
+| `getGhostY()`   | Calcula la posición Y final de la ghost piece       |
+| `draw()`        | Renderiza todo: grid, tablero, ghost, pieza activa  |
+| `loop()`        | Game loop con `requestAnimationFrame`               |
+
+### Flujo del juego
+
+```
+init()
+  ├── createBoard()
+  ├── next = randomPiece()
+  ├── spawn() → mueve next a current, genera nuevo next
+  └── requestAnimationFrame(loop)
+        ↓
+   loop(timestamp)
+     ├── acumula dt
+     ├── si dt ≥ dropInterval → baja o fija la pieza
+     ├── draw()
+     └── requestAnimationFrame(loop)
+
+   keydown → mover / rotar / soft-drop / hard-drop / pausa
+```
+
+---
+
+## Personalización
+
+Parámetros fáciles de ajustar en `game.js`:
+
+| Constante      | Significado                                | Por defecto           |
+|----------------|--------------------------------------------|-----------------------|
+| `COLS`         | Columnas del tablero                       | `10`                  |
+| `ROWS`         | Filas del tablero                          | `20`                  |
+| `BLOCK`        | Tamaño en px de cada celda                 | `30`                  |
+| `COLORS`       | Paleta de colores por tipo de pieza        | 7 colores neón        |
+| `LINE_SCORES`  | Puntos por 1-4 líneas eliminadas           | `[0,100,300,500,800]` |
+
+> Si cambias `COLS`, `ROWS` o `BLOCK`, ajusta también `width`/`height` del `<canvas id="board">` en `index.html`.
+
+---
+
+## Ideas para mejorar
+
+- [ ] Soporte táctil (swipe) para móviles
+- [ ] Efectos de sonido
+- [ ] Animación de flash al eliminar líneas
+- [ ] Sistema de high scores (localStorage)
+- [ ] Rotación en sentido antihorario (`Z`)
+- [ ] Hold piece (guardar pieza actual)
+- [ ] Modo multijugador
+
+---
+
+## Tecnologías
+
+- **HTML5** – Canvas 2D API
+- **CSS3** – Flexbox, variables CSS, animaciones
+- **JavaScript ES6+** – Sin dependencias externas
+
+---
+
+## Licencia
+
+Proyecto de uso libre con fines educativos y de práctica.

@@ -72,6 +72,7 @@ const elLevel = document.getElementById('level');
 const overlay  = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySub   = document.getElementById('overlay-sub');
+const themeToggle  = document.getElementById('theme-toggle');
 
 // ── Estado del juego ──────────────────────────────────────────
 let board;        // matriz ROWS × COLS
@@ -268,7 +269,9 @@ function draw() {
 
 /** Cuadrícula de fondo */
 function drawGrid() {
-  boardCtx.strokeStyle = 'rgba(255,255,255,0.04)';
+  const gridColor = getComputedStyle(document.body).getPropertyValue('--canvas-grid').trim()
+    || 'rgba(255,255,255,0.04)';
+  boardCtx.strokeStyle = gridColor;
   boardCtx.lineWidth   = 0.5;
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
@@ -427,6 +430,20 @@ function loop(timestamp) {
   draw();
   animId = requestAnimationFrame(loop);
 }
+
+// ── Tema ──────────────────────────────────────────────────────
+function toggleTheme() {
+  const isLight = document.body.getAttribute('data-theme') === 'light';
+  if (isLight) {
+    document.body.removeAttribute('data-theme');
+    themeToggle.textContent = '☀ LIGHT';
+  } else {
+    document.body.setAttribute('data-theme', 'light');
+    themeToggle.textContent = '◑ DARK';
+  }
+}
+
+themeToggle.addEventListener('click', toggleTheme);
 
 // ── Controles de teclado ──────────────────────────────────────
 document.addEventListener('keydown', (e) => {

@@ -625,7 +625,6 @@ function draw() {
     boardCtx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
   }
 
-  drawGrid();
   drawBoard();
   drawGhost();
   drawPiece(current, boardCtx, BLOCK);

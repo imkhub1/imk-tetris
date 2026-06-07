@@ -462,6 +462,29 @@ kbd {
 }
 
 /* ---------- Pause Menu ---------- */
+
+/* Inside the board-wrapper, pause-menu buttons should use board-scoped vars
+   so they remain readable in light mode */
+.pause-menu .theme-btn {
+  color: var(--board-overlay-heading);
+  border-color: var(--board-overlay-border);
+  text-shadow: var(--board-overlay-heading-glow);
+}
+
+.pause-menu .theme-btn:hover {
+  border-color: var(--board-overlay-heading);
+}
+
+.pause-menu .label {
+  color: var(--board-overlay-muted);
+}
+
+.pause-menu kbd {
+  color: var(--board-overlay-heading);
+  border-color: var(--board-overlay-border);
+  background: transparent;
+}
+
 .pause-menu {
   position: absolute;
   inset: 0;
@@ -481,8 +504,8 @@ kbd {
 
 .pause-menu-title {
   font-size: .9rem;
-  color: var(--accent);
-  text-shadow: var(--glow);
+  color: var(--board-overlay-heading);
+  text-shadow: var(--board-overlay-heading-glow);
   letter-spacing: 4px;
   text-align: center;
 }
@@ -506,7 +529,7 @@ kbd {
   flex-direction: column;
   gap: 8px;
   width: 80%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--board-overlay-border);
   border-radius: 2px;
   padding: 10px;
 }
@@ -521,7 +544,7 @@ kbd {
 
 .pause-controls li {
   font-size: .38rem;
-  color: var(--muted);
+  color: var(--board-overlay-muted);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -552,8 +575,8 @@ kbd {
 
 .level-value {
   font-size: .85rem;
-  color: var(--accent);
-  text-shadow: var(--glow);
+  color: var(--board-overlay-heading);
+  text-shadow: var(--board-overlay-heading-glow);
   min-width: 2ch;
   text-align: center;
 }

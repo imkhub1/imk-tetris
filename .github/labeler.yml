@@ -1,0 +1,21 @@
+ci/cd:
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
+
+game:
+  - changed-files:
+      - any-glob-to-any-file: 'game.js'
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.html'
+          - '*.css'
+          - 'style.css'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '*.md'
+          - 'README.md'
+          - 'CLAUDE.md'

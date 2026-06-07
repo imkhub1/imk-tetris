@@ -252,7 +252,7 @@ function clearLines() {
 
 // ── Velocidad de caída ────────────────────────────────────────
 function calcDropInterval(lvl) {
-  return Math.max(100, 1000 - (lvl - 1) * 90);
+  return Math.max(50, 1000 - (lvl - 1) * 90);
 }
 
 // ── Ghost piece ───────────────────────────────────────────────
@@ -467,6 +467,7 @@ themeToggle.addEventListener('click', toggleTheme);
 // ── Controles de teclado ──────────────────────────────────────
 document.addEventListener('keydown', (e) => {
   if (gameOver) {
+    if (e.code === 'Escape') { e.preventDefault(); return; }
     if (e.code === 'Enter') init();
     return;
   }
@@ -529,4 +530,5 @@ btnLevelInc.addEventListener('click', () => {
 });
 
 // ── Arrancar ──────────────────────────────────────────────────
+updateStartLevelDisplay();
 init();

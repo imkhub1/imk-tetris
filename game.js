@@ -91,13 +91,13 @@ const SKINS = {
   pastel: {
     palette: [
       null,
-      '#a8d8ea', // I
-      '#f9e4b7', // O
-      '#d4b8e0', // T
-      '#b8e4c8', // S
-      '#f4b8c8', // Z
-      '#b8d0f4', // J
-      '#f4d0b8', // L
+      '#75bde0', // I
+      '#f0cc78', // O
+      '#bc8fd6', // T
+      '#82cf9d', // S
+      '#ea8ea8', // Z
+      '#86aee6', // J
+      '#eab88a', // L
     ],
     drawBlockFn(ctx, col, row, color, size) {
       const x = col * size;
@@ -127,10 +127,18 @@ const SKINS = {
         ctx.fill();
       }
 
-      // Light shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      // Stronger contrast accents for readability on bright boards
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(x + 1, y + 1, size - 2, 1.5);
+      ctx.fillRect(x + 1, y + 1, 1.5, size - 2);
+
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
       ctx.fillRect(x + 1, y + size - 3, size - 2, 2);
       ctx.fillRect(x + size - 3, y + 1, 2, size - 2);
+
+      ctx.strokeStyle = 'rgba(65,70,110,0.35)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
     },
   },
 
@@ -248,6 +256,7 @@ const LINE_SCORES = [0, 100, 300, 500, 800];
 // ── DOM References ────────────────────────────────────────────
 const boardCanvas  = document.getElementById('board');
 const boardCtx     = boardCanvas.getContext('2d');
+const boardWrapper = document.querySelector('.board-wrapper');
 const nextCanvas   = document.getElementById('next');
 const nextCtx      = nextCanvas.getContext('2d');
 
@@ -591,6 +600,10 @@ function calcDropInterval(lvl) {
   return Math.max(50, 1000 - (lvl - 1) * 90);
 }
 
+function isBoardLightTheme() {
+  return !!boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
+}
+
 // ── Ghost piece ───────────────────────────────────────────────
 function getGhostY() {
   let gy = current.y;
@@ -606,9 +619,9 @@ function getGhostY() {
 function draw() {
   boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
-  // Neon skin uses a solid black background
+  // Neon background adapts to board theme while preserving the skin style.
   if (activeSkin === 'neon') {
-    boardCtx.fillStyle = '#000000';
+    boardCtx.fillStyle = isBoardLightTheme() ? '#eef2fb' : '#000000';
     boardCtx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
   }
 
@@ -619,7 +632,7 @@ function draw() {
 }
 
 function drawGrid() {
-  const gridColor = getComputedStyle(document.body).getPropertyValue('--canvas-grid').trim()
+  const gridColor = getComputedStyle(boardWrapper || document.body).getPropertyValue('--board-canvas-grid').trim()
     || 'rgba(255,255,255,0.04)';
   boardCtx.strokeStyle = gridColor;
   boardCtx.lineWidth   = 0.5;
@@ -643,7 +656,13 @@ function drawBoard() {
 
 function drawGhost() {
   const gy = getGhostY();
-  boardCtx.globalAlpha = 0.18;
+  const ghostAlphaBySkin = {
+    pastel: 0.32,
+    neon: 0.22,
+    retro: 0.18,
+    pixel: 0.2,
+  };
+  boardCtx.globalAlpha = ghostAlphaBySkin[activeSkin] || 0.2;
   const { matrix, x } = current;
   const palette = getPalette();
   for (let r = 0; r < matrix.length; r++) {
@@ -830,14 +849,17 @@ function loop(timestamp) {
 
 // ── Theme ──────────────────────────────────────────────────────
 function toggleTheme() {
-  const isLight = document.body.getAttribute('data-theme') === 'light';
+  const isLight = boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
   if (isLight) {
-    document.body.removeAttribute('data-theme');
+    boardWrapper.removeAttribute('data-theme');
     themeToggle.textContent = '☀ LIGHT';
   } else {
-    document.body.setAttribute('data-theme', 'light');
+    if (boardWrapper) {
+      boardWrapper.setAttribute('data-theme', 'light');
+    }
     themeToggle.textContent = '◑ DARK';
   }
+  if (current) draw();
 }
 
 themeToggle.addEventListener('click', toggleTheme);

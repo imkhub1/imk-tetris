@@ -25,21 +25,19 @@
   --grid-color:  rgba(0,245,255,.03);
   --overlay-bg:  rgba(13,13,15,.85);
   --canvas-grid: rgba(255,255,255,0.04);
-}
-
-[data-theme="light"] {
-  --bg:          #f0f2f8;
-  --surface:     #e4e6f0;
-  --border:      #b8bcd8;
-  --accent:      #0088bb;
-  --accent2:     #dd1166;
-  --text:        #12122e;
-  --muted:       #6060a0;
-  --glow:        0 0 8px #0088bb, 0 0 20px rgba(0,136,187,.25);
-  --glow2:       0 0 8px #dd1166, 0 0 20px rgba(221,17,102,.25);
-  --grid-color:  rgba(0,100,200,.05);
-  --overlay-bg:  rgba(240,242,248,.88);
-  --canvas-grid: rgba(0,0,0,0.08);
+  --board-surface:      var(--surface);
+  --board-border:       var(--border);
+  --board-glow:         var(--glow);
+  --board-inset-shadow: rgba(0,0,0,.6);
+  --board-overlay-bg:   var(--overlay-bg);
+  --board-canvas-grid:  var(--canvas-grid);
+  --board-overlay-title: var(--accent2);
+  --board-overlay-title-glow: var(--glow2);
+  --board-overlay-heading: var(--accent);
+  --board-overlay-heading-glow: var(--glow);
+  --board-overlay-text: var(--text);
+  --board-overlay-muted: var(--muted);
+  --board-overlay-border: var(--border);
 }
 
 body {
@@ -108,14 +106,30 @@ body {
 /* ---------- Board wrapper ---------- */
 .board-wrapper {
   position: relative;
-  border: 2px solid var(--border);
-  box-shadow: var(--glow), inset 0 0 40px rgba(0,0,0,.6);
+  border: 2px solid var(--board-border);
+  box-shadow: var(--board-glow), inset 0 0 40px var(--board-inset-shadow);
   border-radius: 2px;
+}
+
+.board-wrapper[data-theme="light"] {
+  --board-surface:      #e4e6f0;
+  --board-border:       #b8bcd8;
+  --board-glow:         0 0 8px #0088bb, 0 0 20px rgba(0,136,187,.25);
+  --board-inset-shadow: rgba(0,0,0,.16);
+  --board-overlay-bg:   rgba(240,242,248,.88);
+  --board-canvas-grid:  rgba(0,0,0,0.08);
+  --board-overlay-title: #d31263;
+  --board-overlay-title-glow: 0 0 6px rgba(211,18,99,.3);
+  --board-overlay-heading: #0b6ea0;
+  --board-overlay-heading-glow: none;
+  --board-overlay-text: #1f2240;
+  --board-overlay-muted: #4a4e78;
+  --board-overlay-border: #9299ba;
 }
 
 #board {
   display: block;
-  background-color: var(--surface);
+  background-color: var(--board-surface);
 }
 
 /* ---------- Next piece canvas ---------- */
@@ -167,7 +181,7 @@ kbd {
 .overlay {
   position: absolute;
   inset: 0;
-  background: var(--overlay-bg);
+  background: var(--board-overlay-bg);
   backdrop-filter: blur(4px);
   display: flex;
   justify-content: center;
@@ -195,8 +209,8 @@ kbd {
 
 .overlay-title {
   font-size: .9rem;
-  color: var(--accent2);
-  text-shadow: var(--glow2);
+  color: var(--board-overlay-title);
+  text-shadow: var(--board-overlay-title-glow);
   text-align: center;
   line-height: 1.5;
   letter-spacing: 2px;
@@ -204,7 +218,7 @@ kbd {
 
 .overlay-sub {
   font-size: .45rem;
-  color: var(--muted);
+  color: var(--board-overlay-muted);
   text-align: center;
   line-height: 2;
   letter-spacing: 1px;
@@ -274,17 +288,17 @@ kbd {
 .hs-table td {
   padding: 5px 10px;
   text-align: center;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--board-overlay-border);
   letter-spacing: 1px;
 }
 
 .hs-table th {
-  color: var(--muted);
+  color: var(--board-overlay-muted);
   font-size: .35rem;
 }
 
 .hs-table td {
-  color: var(--text);
+  color: var(--board-overlay-text);
 }
 
 .hs-table th:nth-child(1),
@@ -363,9 +377,9 @@ kbd {
   font-family: var(--font);
   font-size: .35rem;
   letter-spacing: 2px;
-  color: var(--muted);
+  color: var(--board-overlay-muted);
   background: transparent;
-  border: 1px solid var(--border);
+  border: 1px solid var(--board-overlay-border);
   border-radius: 2px;
   padding: 5px 10px;
   cursor: pointer;
@@ -374,8 +388,8 @@ kbd {
 }
 
 .reset-btn:hover {
-  color: var(--accent2);
-  border-color: var(--accent2);
+  color: var(--board-overlay-title);
+  border-color: var(--board-overlay-title);
 }
 
 /* ---------- Name entry ---------- */
@@ -392,8 +406,8 @@ kbd {
 
 .name-label {
   font-size: .5rem;
-  color: var(--accent2);
-  text-shadow: var(--glow2);
+  color: var(--board-overlay-title);
+  text-shadow: var(--board-overlay-title-glow);
   letter-spacing: 2px;
 }
 
@@ -406,9 +420,9 @@ kbd {
 .name-input {
   font-family: var(--font);
   font-size: .52rem;
-  color: var(--accent);
-  background: var(--surface);
-  border: 1px solid var(--accent);
+  color: var(--board-overlay-heading);
+  background: var(--board-surface);
+  border: 1px solid var(--board-overlay-heading);
   border-radius: 2px;
   padding: 6px 10px;
   width: 190px;
@@ -416,34 +430,39 @@ kbd {
   letter-spacing: 2px;
   text-transform: uppercase;
   outline: none;
-  box-shadow: var(--glow);
+  box-shadow: none;
 }
 
 .name-input::placeholder {
-  color: var(--muted);
+  color: var(--board-overlay-muted);
 }
 
 .name-save-btn {
   font-family: var(--font);
   font-size: .38rem;
   letter-spacing: 2px;
-  color: var(--accent2);
+  color: var(--board-overlay-title);
   background: transparent;
-  border: 1px solid var(--accent2);
+  border: 1px solid var(--board-overlay-title);
   border-radius: 2px;
   padding: 6px 10px;
   cursor: pointer;
-  text-shadow: var(--glow2);
+  text-shadow: none;
   transition: background .2s;
 }
 
 .name-save-btn:hover {
-  background: rgba(255, 45, 120, .15);
+  background: rgba(211, 18, 99, .12);
 }
 
 /* ---------- Overlay high-scores section ---------- */
 #overlay-hs-section.hidden {
   display: none;
+}
+
+.board-wrapper .overlay .hs-heading {
+  color: var(--board-overlay-heading);
+  text-shadow: var(--board-overlay-heading-glow);
 }
 
 /* ---------- Theme toggle button ---------- */
@@ -470,7 +489,7 @@ kbd {
 .pause-menu {
   position: absolute;
   inset: 0;
-  background: var(--overlay-bg);
+  background: var(--board-overlay-bg);
   backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;

@@ -222,3 +222,100 @@ kbd {
 .theme-btn:hover {
   border-color: var(--accent);
 }
+
+/* ---------- Pause Menu ---------- */
+.pause-menu {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(4px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  z-index: 20;
+}
+
+.pause-menu.hidden {
+  display: none;
+}
+
+.pause-menu-title {
+  font-size: .9rem;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  letter-spacing: 4px;
+  text-align: center;
+}
+
+.pause-menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 80%;
+}
+
+.pause-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: .45rem;
+  letter-spacing: 2px;
+}
+
+.pause-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 80%;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 10px;
+}
+
+.pause-controls ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.pause-controls li {
+  font-size: .38rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pause-level-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 80%;
+}
+
+.level-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.level-btn {
+  width: 32px;
+  padding: 6px 0;
+  font-size: .6rem;
+  text-align: center;
+}
+
+.level-value {
+  font-size: .85rem;
+  color: var(--accent);
+  text-shadow: var(--glow);
+  min-width: 2ch;
+  text-align: center;
+}

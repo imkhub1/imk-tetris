@@ -73,6 +73,12 @@ const overlay  = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySub   = document.getElementById('overlay-sub');
 const themeToggle  = document.getElementById('theme-toggle');
+const pauseMenu          = document.getElementById('pause-menu');
+const btnResume          = document.getElementById('btn-resume');
+const btnRestart         = document.getElementById('btn-restart');
+const btnLevelDec        = document.getElementById('btn-level-dec');
+const btnLevelInc        = document.getElementById('btn-level-inc');
+const startLevelDisplay  = document.getElementById('start-level-display');
 
 // ── Estado del juego ──────────────────────────────────────────
 let board;        // matriz ROWS × COLS
@@ -88,12 +94,15 @@ let paused;
 let gameOver;
 let animId;       // requestAnimationFrame handle
 
+// Starting level for next game (persists across games in session)
+let startLevel = 1;
+
 // ── Inicialización ────────────────────────────────────────────
 function init() {
   board       = createBoard();
   score       = 0;
   lines       = 0;
-  level       = 1;
+  level       = startLevel;
   dropInterval = calcDropInterval(level);
   lastTime    = null;
   accumulated = 0;
@@ -102,6 +111,7 @@ function init() {
 
   updateHUD();
   hideOverlay();
+  hidePauseMenu();
 
   next = randomPiece();
   spawn();
@@ -235,7 +245,7 @@ function clearLines() {
 
   lines += cleared;
   score += LINE_SCORES[cleared] * level;
-  level  = Math.floor(lines / 10) + 1;
+  level  = startLevel + Math.floor(lines / 10);
   dropInterval = calcDropInterval(level);
   updateHUD();
 }
@@ -391,15 +401,24 @@ function endGame() {
   showOverlay('GAME OVER', 'Press ENTER to restart');
 }
 
+// ── Pause Menu ────────────────────────────────────────────────
+function showPauseMenu() {
+  pauseMenu.classList.remove('hidden');
+}
+
+function hidePauseMenu() {
+  pauseMenu.classList.add('hidden');
+}
+
 // ── Pausa ─────────────────────────────────────────────────────
 function togglePause() {
   if (gameOver) return;
   paused = !paused;
   if (paused) {
     cancelAnimationFrame(animId);
-    showOverlay('PAUSE', 'Press P to continue');
+    showPauseMenu();
   } else {
-    hideOverlay();
+    hidePauseMenu();
     lastTime   = null;
     accumulated = 0;
     animId = requestAnimationFrame(loop);
@@ -475,8 +494,37 @@ document.addEventListener('keydown', (e) => {
       if (!paused) hardDrop();
       break;
     case 'KeyP':
+    case 'Escape':
+      e.preventDefault();
       togglePause();
       break;
+  }
+});
+
+// ── Pause menu button wiring ──────────────────────────────────
+btnResume.addEventListener('click', () => {
+  if (paused) togglePause();
+});
+
+btnRestart.addEventListener('click', () => {
+  init();
+});
+
+function updateStartLevelDisplay() {
+  startLevelDisplay.textContent = startLevel;
+}
+
+btnLevelDec.addEventListener('click', () => {
+  if (startLevel > 1) {
+    startLevel--;
+    updateStartLevelDisplay();
+  }
+});
+
+btnLevelInc.addEventListener('click', () => {
+  if (startLevel < 10) {
+    startLevel++;
+    updateStartLevelDisplay();
   }
 });
 

@@ -31,10 +31,40 @@
       <main class="board-wrapper">
         <canvas id="board" width="300" height="600"></canvas>
 
-        <!-- Overlay: Pausa / Game Over -->
+        <!-- Overlay: Game Over -->
         <div id="overlay" class="overlay hidden">
           <p id="overlay-title" class="overlay-title"></p>
           <p id="overlay-sub" class="overlay-sub"></p>
+        </div>
+
+        <!-- Pause Menu -->
+        <div id="pause-menu" class="pause-menu hidden">
+          <p class="pause-menu-title">PAUSED</p>
+
+          <div class="pause-menu-buttons">
+            <button id="btn-resume" class="theme-btn pause-btn">RESUME</button>
+            <button id="btn-restart" class="theme-btn pause-btn">RESTART</button>
+          </div>
+
+          <div class="pause-controls">
+            <span class="label">CONTROLS</span>
+            <ul>
+              <li><kbd>←</kbd><kbd>→</kbd> Move</li>
+              <li><kbd>↑</kbd> / <kbd>X</kbd> Rotate</li>
+              <li><kbd>↓</kbd> Soft Drop</li>
+              <li><kbd>Space</kbd> Hard Drop</li>
+              <li><kbd>P</kbd> Pause</li>
+            </ul>
+          </div>
+
+          <div class="pause-level-select">
+            <span class="label">STARTING LEVEL</span>
+            <div class="level-controls">
+              <button id="btn-level-dec" class="theme-btn level-btn">-</button>
+              <span id="start-level-display" class="level-value">1</span>
+              <button id="btn-level-inc" class="theme-btn level-btn">+</button>
+            </div>
+          </div>
         </div>
       </main>
 

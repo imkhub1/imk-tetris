@@ -388,7 +388,7 @@ function hideOverlay() {
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
-  showOverlay('GAME OVER', 'Presiona ENTER para reiniciar');
+  showOverlay('GAME OVER', 'Press ENTER to restart');
 }
 
 // ── Pausa ─────────────────────────────────────────────────────
@@ -397,7 +397,7 @@ function togglePause() {
   paused = !paused;
   if (paused) {
     cancelAnimationFrame(animId);
-    showOverlay('PAUSA', 'Presiona P para continuar');
+    showOverlay('PAUSE', 'Press P to continue');
   } else {
     hideOverlay();
     lastTime   = null;

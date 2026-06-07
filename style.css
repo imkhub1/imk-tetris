@@ -141,30 +141,6 @@ body {
   margin-top: 4px;
 }
 
-/* ---------- Controls ---------- */
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.controls ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.controls li {
-  font-size: .4rem;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
 kbd {
   display: inline-block;
   padding: 1px 4px;

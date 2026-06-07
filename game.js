@@ -12,6 +12,8 @@ const BLOCK        = 30;
 const NEXT_BLOCK   = 24;
 const HS_KEY       = 'imktetris.highscores';
 const MAX_HS       = 5;
+const HS_NAME_MAX_LEN = 10;
+const HS_NAME_FALLBACK = 'AAA';
 
 // ── Skins ─────────────────────────────────────────────────────
 const SKINS = {
@@ -323,6 +325,24 @@ function resetHighScores() {
   } catch (_) {}
 }
 
+const HS_NAME_CHAR_RE = /[\p{L}\p{N}]/u;
+
+function sanitizeHsName(raw) {
+  const source = String(raw ?? '').normalize('NFC').toUpperCase();
+  const chars = [];
+  for (const ch of source) {
+    if (!HS_NAME_CHAR_RE.test(ch)) continue;
+    chars.push(ch);
+    if (chars.length >= HS_NAME_MAX_LEN) break;
+  }
+  return chars.join('');
+}
+
+function getValidHsName(raw) {
+  const cleaned = sanitizeHsName(raw);
+  return cleaned || HS_NAME_FALLBACK;
+}
+
 /** Returns true if score qualifies for top-5. */
 function qualifiesForTop5(s) {
   const hs = loadHighScores();
@@ -357,7 +377,8 @@ function renderHsTable(tbody, highlightIdx) {
   hs.forEach((entry, i) => {
     const tr = document.createElement('tr');
     if (i === highlightIdx) tr.classList.add('hs-new');
-    [i + 1, entry.name || '---', entry.score, entry.lines, entry.combo].forEach(val => {
+    const safeName = getValidHsName(entry.name);
+    [i + 1, safeName, entry.score, entry.lines, entry.combo].forEach(val => {
       const td = document.createElement('td');
       td.textContent = val;
       tr.appendChild(td);
@@ -739,7 +760,7 @@ function hidePauseMenu() {
 
 function saveNameEntry() {
   if (!waitingForName) return;
-  const name = (nameInput.value || 'AAA').toUpperCase().slice(0, 3).padEnd(3, 'A');
+  const name = getValidHsName(nameInput.value);
   const record = { name, score, combo: maxCombo, lines };
   newRecordIdx = insertHighScore(record);
   waitingForName = false;
@@ -752,18 +773,19 @@ function saveNameEntry() {
 nameSaveBtn.addEventListener('click', saveNameEntry);
 
 nameInput.addEventListener('keydown', (e) => {
-  // Auto-caps: convert typed character to uppercase
-  if (e.key.length === 1 && /[a-z]/i.test(e.key)) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key.length === 1) {
     e.preventDefault();
-    const cur = nameInput.value;
-    if (cur.length < 3) {
-      nameInput.value = (cur + e.key).toUpperCase();
-    }
+    nameInput.value = sanitizeHsName(nameInput.value + e.key);
   }
   if (e.code === 'Enter') {
     e.stopPropagation();
     saveNameEntry();
   }
+});
+
+nameInput.addEventListener('input', () => {
+  nameInput.value = sanitizeHsName(nameInput.value);
 });
 
 // ── Pause ─────────────────────────────────────────────────────

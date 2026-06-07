@@ -170,10 +170,9 @@ kbd {
   background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 20px;
+  padding: 10px;
   z-index: 10;
 }
 
@@ -181,12 +180,25 @@ kbd {
   display: none;
 }
 
+.overlay-card {
+  width: min(286px, 100%);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: rgba(13, 13, 15, 0.9);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.45), inset 0 0 12px rgba(0, 0, 0, 0.35);
+  padding: 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
 .overlay-title {
   font-size: .9rem;
   color: var(--accent2);
   text-shadow: var(--glow2);
   text-align: center;
-  line-height: 2;
+  line-height: 1.5;
   letter-spacing: 2px;
 }
 
@@ -256,7 +268,6 @@ kbd {
 .hs-table {
   border-collapse: collapse;
   font-size: .38rem;
-  min-width: 280px;
 }
 
 .hs-table th,
@@ -276,9 +287,75 @@ kbd {
   color: var(--text);
 }
 
+.hs-table th:nth-child(1),
+.hs-table td:nth-child(1) {
+  width: 10%;
+}
+
+.hs-table th:nth-child(2),
+.hs-table td:nth-child(2) {
+  width: 36%;
+}
+
+.hs-table th:nth-child(3),
+.hs-table td:nth-child(3),
+.hs-table th:nth-child(4),
+.hs-table td:nth-child(4),
+.hs-table th:nth-child(5),
+.hs-table td:nth-child(5) {
+  width: 18%;
+}
+
+.hs-table td:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .hs-table tr.hs-new td {
   color: var(--accent2);
   text-shadow: var(--glow2);
+}
+
+#start-screen .hs-section {
+  width: min(92vw, 460px);
+}
+
+#start-screen .hs-table {
+  width: 100%;
+  min-width: 360px;
+  table-layout: fixed;
+}
+
+#overlay .hs-section {
+  width: 100%;
+  max-width: 100%;
+  gap: 8px;
+}
+
+#overlay .hs-heading {
+  font-size: .42rem;
+  letter-spacing: 2px;
+}
+
+#overlay .hs-table {
+  width: 100%;
+  min-width: 0;
+  table-layout: fixed;
+  font-size: .31rem;
+}
+
+#overlay .hs-table th,
+#overlay .hs-table td {
+  padding: 4px 4px;
+}
+
+#overlay .hs-table th {
+  font-size: .3rem;
+}
+
+#overlay .overlay-sub {
+  line-height: 1.6;
 }
 
 /* ---------- Reset button ---------- */
@@ -328,15 +405,15 @@ kbd {
 
 .name-input {
   font-family: var(--font);
-  font-size: .65rem;
+  font-size: .52rem;
   color: var(--accent);
   background: var(--surface);
   border: 1px solid var(--accent);
   border-radius: 2px;
   padding: 6px 10px;
-  width: 60px;
+  width: 190px;
   text-align: center;
-  letter-spacing: 4px;
+  letter-spacing: 2px;
   text-transform: uppercase;
   outline: none;
   box-shadow: var(--glow);

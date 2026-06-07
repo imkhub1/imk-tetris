@@ -59,36 +59,38 @@
 
         <!-- Overlay: Game Over -->
         <div id="overlay" class="overlay hidden">
-          <p id="overlay-title" class="overlay-title"></p>
+          <div class="overlay-card">
+            <p id="overlay-title" class="overlay-title"></p>
 
-          <!-- Name entry (shown when qualifying for top 5) -->
-          <div id="name-entry" class="name-entry hidden">
-            <p class="name-label">NEW HIGH SCORE!</p>
-            <div class="name-input-row">
-              <input id="name-input" class="name-input" type="text" maxlength="3" placeholder="AAA" autocomplete="off" />
-              <button id="name-save-btn" class="name-save-btn">SAVE</button>
+            <!-- Name entry (shown when qualifying for top 5) -->
+            <div id="name-entry" class="name-entry hidden">
+              <p class="name-label">NEW HIGH SCORE!</p>
+              <div class="name-input-row">
+                <input id="name-input" class="name-input" type="text" maxlength="10" placeholder="PLAYER1234" autocomplete="off" />
+                <button id="name-save-btn" class="name-save-btn">SAVE</button>
+              </div>
             </div>
-          </div>
 
-          <!-- High scores table in overlay -->
-          <div id="overlay-hs-section" class="hs-section hidden">
-            <p class="hs-heading">HIGH SCORES</p>
-            <table class="hs-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>NAME</th>
-                  <th>SCORE</th>
-                  <th>LINES</th>
-                  <th>COMBO</th>
-                </tr>
-              </thead>
-              <tbody id="overlay-hs-body"></tbody>
-            </table>
-            <button class="reset-btn" id="overlay-reset-btn">Reset Records</button>
-          </div>
+            <!-- High scores table in overlay -->
+            <div id="overlay-hs-section" class="hs-section hidden">
+              <p class="hs-heading">HIGH SCORES</p>
+              <table class="hs-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>NAME</th>
+                    <th>SCORE</th>
+                    <th>LINES</th>
+                    <th>COMBO</th>
+                  </tr>
+                </thead>
+                <tbody id="overlay-hs-body"></tbody>
+              </table>
+              <button class="reset-btn" id="overlay-reset-btn">Reset Records</button>
+            </div>
 
-          <p id="overlay-sub" class="overlay-sub"></p>
+            <p id="overlay-sub" class="overlay-sub"></p>
+          </div>
         </div>
 
         <!-- Pause Menu -->
@@ -127,17 +129,6 @@
         <div class="info-block">
           <span class="label">NEXT</span>
           <canvas id="next" width="120" height="120"></canvas>
-        </div>
-
-        <div class="controls">
-          <span class="label">CONTROLS</span>
-          <ul>
-            <li><kbd>←</kbd><kbd>→</kbd> Move</li>
-            <li><kbd>↑</kbd> / <kbd>X</kbd> Rotate</li>
-            <li><kbd>↓</kbd> Soft Drop</li>
-            <li><kbd>Space</kbd> Hard Drop</li>
-            <li><kbd>P</kbd> Pause</li>
-          </ul>
         </div>
 
         <div class="skin-selector">

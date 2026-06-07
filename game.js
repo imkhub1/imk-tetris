@@ -12,6 +12,8 @@ const BLOCK        = 30;
 const NEXT_BLOCK   = 24;
 const HS_KEY       = 'imktetris.highscores';
 const MAX_HS       = 5;
+const HS_NAME_MAX_LEN = 10;
+const HS_NAME_FALLBACK = 'AAA';
 
 // ── Skins ─────────────────────────────────────────────────────
 const SKINS = {
@@ -89,13 +91,13 @@ const SKINS = {
   pastel: {
     palette: [
       null,
-      '#a8d8ea', // I
-      '#f9e4b7', // O
-      '#d4b8e0', // T
-      '#b8e4c8', // S
-      '#f4b8c8', // Z
-      '#b8d0f4', // J
-      '#f4d0b8', // L
+      '#75bde0', // I
+      '#f0cc78', // O
+      '#bc8fd6', // T
+      '#82cf9d', // S
+      '#ea8ea8', // Z
+      '#86aee6', // J
+      '#eab88a', // L
     ],
     drawBlockFn(ctx, col, row, color, size) {
       const x = col * size;
@@ -125,10 +127,18 @@ const SKINS = {
         ctx.fill();
       }
 
-      // Light shadow
-      ctx.fillStyle = 'rgba(0,0,0,0.15)';
+      // Stronger contrast accents for readability on bright boards
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(x + 1, y + 1, size - 2, 1.5);
+      ctx.fillRect(x + 1, y + 1, 1.5, size - 2);
+
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
       ctx.fillRect(x + 1, y + size - 3, size - 2, 2);
       ctx.fillRect(x + size - 3, y + 1, 2, size - 2);
+
+      ctx.strokeStyle = 'rgba(65,70,110,0.35)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
     },
   },
 
@@ -246,6 +256,7 @@ const LINE_SCORES = [0, 100, 300, 500, 800];
 // ── DOM References ────────────────────────────────────────────
 const boardCanvas  = document.getElementById('board');
 const boardCtx     = boardCanvas.getContext('2d');
+const boardWrapper = document.querySelector('.board-wrapper');
 const nextCanvas   = document.getElementById('next');
 const nextCtx      = nextCanvas.getContext('2d');
 
@@ -323,6 +334,24 @@ function resetHighScores() {
   } catch (_) {}
 }
 
+const HS_NAME_CHAR_RE = /[\p{L}\p{N}]/u;
+
+function sanitizeHsName(raw) {
+  const source = String(raw ?? '').normalize('NFC').toUpperCase();
+  const chars = [];
+  for (const ch of source) {
+    if (!HS_NAME_CHAR_RE.test(ch)) continue;
+    chars.push(ch);
+    if (chars.length >= HS_NAME_MAX_LEN) break;
+  }
+  return chars.join('');
+}
+
+function getValidHsName(raw) {
+  const cleaned = sanitizeHsName(raw);
+  return cleaned || HS_NAME_FALLBACK;
+}
+
 /** Returns true if score qualifies for top-5. */
 function qualifiesForTop5(s) {
   const hs = loadHighScores();
@@ -357,7 +386,8 @@ function renderHsTable(tbody, highlightIdx) {
   hs.forEach((entry, i) => {
     const tr = document.createElement('tr');
     if (i === highlightIdx) tr.classList.add('hs-new');
-    [i + 1, entry.name || '---', entry.score, entry.lines, entry.combo].forEach(val => {
+    const safeName = getValidHsName(entry.name);
+    [i + 1, safeName, entry.score, entry.lines, entry.combo].forEach(val => {
       const td = document.createElement('td');
       td.textContent = val;
       tr.appendChild(td);
@@ -570,6 +600,10 @@ function calcDropInterval(lvl) {
   return Math.max(50, 1000 - (lvl - 1) * 90);
 }
 
+function isBoardLightTheme() {
+  return !!boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
+}
+
 // ── Ghost piece ───────────────────────────────────────────────
 function getGhostY() {
   let gy = current.y;
@@ -585,9 +619,9 @@ function getGhostY() {
 function draw() {
   boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
-  // Neon skin uses a solid black background
+  // Neon background adapts to board theme while preserving the skin style.
   if (activeSkin === 'neon') {
-    boardCtx.fillStyle = '#000000';
+    boardCtx.fillStyle = isBoardLightTheme() ? '#eef2fb' : '#000000';
     boardCtx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
   }
 
@@ -598,7 +632,7 @@ function draw() {
 }
 
 function drawGrid() {
-  const gridColor = getComputedStyle(document.body).getPropertyValue('--canvas-grid').trim()
+  const gridColor = getComputedStyle(boardWrapper || document.body).getPropertyValue('--board-canvas-grid').trim()
     || 'rgba(255,255,255,0.04)';
   boardCtx.strokeStyle = gridColor;
   boardCtx.lineWidth   = 0.5;
@@ -622,7 +656,13 @@ function drawBoard() {
 
 function drawGhost() {
   const gy = getGhostY();
-  boardCtx.globalAlpha = 0.18;
+  const ghostAlphaBySkin = {
+    pastel: 0.32,
+    neon: 0.22,
+    retro: 0.18,
+    pixel: 0.2,
+  };
+  boardCtx.globalAlpha = ghostAlphaBySkin[activeSkin] || 0.2;
   const { matrix, x } = current;
   const palette = getPalette();
   for (let r = 0; r < matrix.length; r++) {
@@ -739,7 +779,7 @@ function hidePauseMenu() {
 
 function saveNameEntry() {
   if (!waitingForName) return;
-  const name = (nameInput.value || 'AAA').toUpperCase().slice(0, 3).padEnd(3, 'A');
+  const name = getValidHsName(nameInput.value);
   const record = { name, score, combo: maxCombo, lines };
   newRecordIdx = insertHighScore(record);
   waitingForName = false;
@@ -752,18 +792,19 @@ function saveNameEntry() {
 nameSaveBtn.addEventListener('click', saveNameEntry);
 
 nameInput.addEventListener('keydown', (e) => {
-  // Auto-caps: convert typed character to uppercase
-  if (e.key.length === 1 && /[a-z]/i.test(e.key)) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key.length === 1) {
     e.preventDefault();
-    const cur = nameInput.value;
-    if (cur.length < 3) {
-      nameInput.value = (cur + e.key).toUpperCase();
-    }
+    nameInput.value = sanitizeHsName(nameInput.value + e.key);
   }
   if (e.code === 'Enter') {
     e.stopPropagation();
     saveNameEntry();
   }
+});
+
+nameInput.addEventListener('input', () => {
+  nameInput.value = sanitizeHsName(nameInput.value);
 });
 
 // ── Pause ─────────────────────────────────────────────────────
@@ -808,14 +849,17 @@ function loop(timestamp) {
 
 // ── Theme ──────────────────────────────────────────────────────
 function toggleTheme() {
-  const isLight = document.body.getAttribute('data-theme') === 'light';
+  const isLight = boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
   if (isLight) {
-    document.body.removeAttribute('data-theme');
+    boardWrapper.removeAttribute('data-theme');
     themeToggle.textContent = '☀ LIGHT';
   } else {
-    document.body.setAttribute('data-theme', 'light');
+    if (boardWrapper) {
+      boardWrapper.setAttribute('data-theme', 'light');
+    }
     themeToggle.textContent = '◑ DARK';
   }
+  if (current) draw();
 }
 
 themeToggle.addEventListener('click', toggleTheme);

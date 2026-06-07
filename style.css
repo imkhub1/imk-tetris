@@ -12,16 +12,34 @@
 }
 
 :root {
-  --bg:        #0d0d0f;
-  --surface:   #16161e;
-  --border:    #2a2a40;
-  --accent:    #00f5ff;
-  --accent2:   #ff2d78;
-  --text:      #e0e0e0;
-  --muted:     #555577;
-  --font:      'Press Start 2P', monospace;
-  --glow:      0 0 8px var(--accent), 0 0 20px rgba(0,245,255,.25);
-  --glow2:     0 0 8px var(--accent2), 0 0 20px rgba(255,45,120,.25);
+  --bg:          #0d0d0f;
+  --surface:     #16161e;
+  --border:      #2a2a40;
+  --accent:      #00f5ff;
+  --accent2:     #ff2d78;
+  --text:        #e0e0e0;
+  --muted:       #555577;
+  --font:        'Press Start 2P', monospace;
+  --glow:        0 0 8px var(--accent), 0 0 20px rgba(0,245,255,.25);
+  --glow2:       0 0 8px var(--accent2), 0 0 20px rgba(255,45,120,.25);
+  --grid-color:  rgba(0,245,255,.03);
+  --overlay-bg:  rgba(13,13,15,.85);
+  --canvas-grid: rgba(255,255,255,0.04);
+}
+
+[data-theme="light"] {
+  --bg:          #f0f2f8;
+  --surface:     #e4e6f0;
+  --border:      #b8bcd8;
+  --accent:      #0088bb;
+  --accent2:     #dd1166;
+  --text:        #12122e;
+  --muted:       #6060a0;
+  --glow:        0 0 8px #0088bb, 0 0 20px rgba(0,136,187,.25);
+  --glow2:       0 0 8px #dd1166, 0 0 20px rgba(221,17,102,.25);
+  --grid-color:  rgba(0,100,200,.05);
+  --overlay-bg:  rgba(240,242,248,.88);
+  --canvas-grid: rgba(0,0,0,0.08);
 }
 
 body {
@@ -36,8 +54,8 @@ body {
 
   /* Subtle grid background */
   background-image:
-    linear-gradient(rgba(0,245,255,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,245,255,.03) 1px, transparent 1px);
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
   background-size: 30px 30px;
 }
 
@@ -149,7 +167,7 @@ kbd {
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(13,13,15,.85);
+  background: var(--overlay-bg);
   backdrop-filter: blur(4px);
   display: flex;
   flex-direction: column;
@@ -183,4 +201,24 @@ kbd {
 
 @keyframes blink {
   50% { opacity: 0; }
+}
+
+/* ---------- Theme toggle button ---------- */
+.theme-btn {
+  font-family: var(--font);
+  font-size: .4rem;
+  letter-spacing: 2px;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 6px 10px;
+  cursor: pointer;
+  width: 100%;
+  text-shadow: var(--glow);
+  transition: border-color .2s;
+}
+
+.theme-btn:hover {
+  border-color: var(--accent);
 }

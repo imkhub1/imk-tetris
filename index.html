@@ -67,40 +67,41 @@
 
         <div class="stats">
           <div class="info-block">
-            <span class="label">SCORE</span>
-            <span class="value" id="score">0</span>
+              <span class="label" id="score-label">SCORE</span>
+              <span class="value" id="score" role="status" aria-atomic="true" aria-labelledby="score-label">0</span>
           </div>
           <div class="info-block">
-            <span class="label">LINES</span>
-            <span class="value" id="lines">0</span>
+              <span class="label" id="lines-label">LINES</span>
+              <span class="value" id="lines" role="status" aria-atomic="true" aria-labelledby="lines-label">0</span>
           </div>
           <div class="info-block">
-            <span class="label">LEVEL</span>
-            <span class="value" id="level">1</span>
+              <span class="label" id="level-label">LEVEL</span>
+              <span class="value" id="level" role="status" aria-atomic="true" aria-labelledby="level-label">1</span>
           </div>
           <div class="info-block">
-            <span class="label">COMBO</span>
-            <span class="value" id="combo">0</span>
+              <span class="label" id="combo-label">COMBO</span>
+              <span class="value" id="combo" role="status" aria-atomic="true" aria-labelledby="combo-label">0</span>
           </div>
         </div>
       </aside>
 
       <!-- Main board -->
       <main class="board-wrapper">
-        <canvas id="board" width="300" height="600"></canvas>
+        <canvas id="board" width="300" height="600" role="img" aria-label="Tetris game board"></canvas>
 
         <!-- Overlay: Game Over -->
         <div id="overlay" class="overlay hidden">
           <div class="overlay-card">
-            <p id="overlay-title" class="overlay-title"></p>
+            <p id="overlay-title" class="overlay-title" tabindex="-1"></p>
 
             <!-- Name entry (shown when qualifying for top 5) -->
             <div id="name-entry" class="name-entry hidden">
-              <p class="name-label">NEW HIGH SCORE!</p>
+            <p class="name-label" id="name-entry-label">NEW HIGH SCORE!</p>
               <div class="name-input-row">
-                <input id="name-input" class="name-input" type="text" maxlength="10" placeholder="PLAYER1234" autocomplete="off" />
-                <button id="name-save-btn" class="name-save-btn">SAVE</button>
-              </div>
+              <label for="name-input" class="visually-hidden">Enter your player name</label>
+              <input id="name-input" class="name-input" type="text" maxlength="10" placeholder="PLAYER1234" autocomplete="off" aria-labelledby="name-entry-label" aria-describedby="name-entry-label" />
+              <button id="name-save-btn" class="name-save-btn">SAVE</button>
+            </div>
             </div>
 
             <!-- High scores table in overlay -->
@@ -149,9 +150,9 @@
           <div class="pause-level-select">
             <span class="label">STARTING LEVEL</span>
             <div class="level-controls">
-              <button id="btn-level-dec" class="theme-btn level-btn">-</button>
-              <span id="start-level-display" class="level-value">1</span>
-              <button id="btn-level-inc" class="theme-btn level-btn">+</button>
+              <button id="btn-level-dec" class="theme-btn level-btn" aria-label="Decrease starting level">-</button>
+              <span id="start-level-display" class="level-value" role="status" aria-live="polite" aria-atomic="true">1</span>
+              <button id="btn-level-inc" class="theme-btn level-btn" aria-label="Increase starting level">+</button>
             </div>
           </div>
         </div>
@@ -160,15 +161,15 @@
       <!-- Right panel: next piece + controls -->
       <aside class="panel panel-right">
         <div class="module next-block info-block">
-          <canvas id="next" width="120" height="120"></canvas>
+          <canvas id="next" width="120" height="120" role="img" aria-label="Next piece preview"></canvas>
         </div>
 
         <div class="module skin-selector">
-          <span class="label">SKINS</span>
-          <div class="skin-btns">
-            <button class="skin-btn active" data-skin="pastel">Pastel</button>
-            <button class="skin-btn" data-skin="arcade">Arcade</button>
-            <button class="skin-btn" data-skin="glass">Glass</button>
+          <span class="label" id="skin-selector-label">SKINS</span>
+          <div class="skin-btns" role="group" aria-labelledby="skin-selector-label">
+            <button class="skin-btn active" data-skin="pastel" aria-pressed="true">Pastel</button>
+            <button class="skin-btn" data-skin="arcade" aria-pressed="false">Arcade</button>
+            <button class="skin-btn" data-skin="glass" aria-pressed="false">Glass</button>
           </div>
         </div>
 

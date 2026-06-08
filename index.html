@@ -9,7 +9,15 @@
   <body>
     <!-- Start Screen -->
     <div id="start-screen" class="start-screen">
-      <h1 class="start-title">IMK TETRIS</h1>
+      <div class="start-brand">
+        <svg class="brand-mark" viewBox="0 0 30 20" aria-hidden="true">
+          <rect x="10.5" y="0.5" width="9" height="9" rx="1.5" />
+          <rect x="20.5" y="0.5" width="9" height="9" rx="1.5" class="accent-cell" />
+          <rect x="0.5" y="10.5" width="9" height="9" rx="1.5" class="accent-cell" />
+          <rect x="10.5" y="10.5" width="9" height="9" rx="1.5" />
+        </svg>
+        <h1 class="start-title"><span class="accent">IMK</span> TETRIS</h1>
+      </div>
       <div class="hs-section">
         <p class="hs-heading">HIGH SCORES</p>
         <table class="hs-table" id="start-hs-table">
@@ -33,23 +41,36 @@
 
       <!-- Left panel: game info -->
       <aside class="panel panel-left">
-        <h1 class="title">IMK TETRIS</h1>
+        <div class="brand">
+          <svg class="brand-mark" viewBox="0 0 30 20" aria-hidden="true">
+            <rect x="10.5" y="0.5" width="9" height="9" rx="1.5" />
+            <rect x="20.5" y="0.5" width="9" height="9" rx="1.5" class="accent-cell" />
+            <rect x="0.5" y="10.5" width="9" height="9" rx="1.5" class="accent-cell" />
+            <rect x="10.5" y="10.5" width="9" height="9" rx="1.5" />
+          </svg>
+          <span class="brand-word">
+            <span class="b1">IMK</span>
+            <span class="b2">TETRIS</span>
+          </span>
+        </div>
 
-        <div class="info-block">
-          <span class="label">SCORE</span>
-          <span class="value" id="score">0</span>
-        </div>
-        <div class="info-block">
-          <span class="label">LINES</span>
-          <span class="value" id="lines">0</span>
-        </div>
-        <div class="info-block">
-          <span class="label">LEVEL</span>
-          <span class="value" id="level">1</span>
-        </div>
-        <div class="info-block">
-          <span class="label">COMBO</span>
-          <span class="value" id="combo">0</span>
+        <div class="stats">
+          <div class="info-block">
+            <span class="label">SCORE</span>
+            <span class="value" id="score">0</span>
+          </div>
+          <div class="info-block">
+            <span class="label">LINES</span>
+            <span class="value" id="lines">0</span>
+          </div>
+          <div class="info-block">
+            <span class="label">LEVEL</span>
+            <span class="value" id="level">1</span>
+          </div>
+          <div class="info-block">
+            <span class="label">COMBO</span>
+            <span class="value" id="combo">0</span>
+          </div>
         </div>
       </aside>
 
@@ -126,22 +147,20 @@
 
       <!-- Right panel: next piece + controls -->
       <aside class="panel panel-right">
-        <div class="info-block">
-          <span class="label">NEXT</span>
+        <div class="module next-block info-block">
           <canvas id="next" width="120" height="120"></canvas>
         </div>
 
-        <div class="skin-selector">
-          <span class="label">SKIN</span>
+        <div class="module skin-selector">
+          <span class="label">SKINS</span>
           <div class="skin-btns">
-            <button class="skin-btn active" data-skin="retro">Retro</button>
-            <button class="skin-btn" data-skin="neon">Neon</button>
-            <button class="skin-btn" data-skin="pastel">Pastel</button>
-            <button class="skin-btn" data-skin="pixel">Pixel</button>
+            <button class="skin-btn active" data-skin="pastel">Pastel</button>
           </div>
         </div>
 
-        <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
+        <div class="module toggle-module">
+          <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
+        </div>
       </aside>
 
     </div>

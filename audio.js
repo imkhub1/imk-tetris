@@ -1,0 +1,254 @@
+/* ============================================================
+   TETRIS – audio.js
+   Lightweight Web Audio SFX manager. Vanilla JS, no assets.
+
+   All sounds are generated on the fly (oscillators + filtered noise)
+   so there is zero download footprint. Exposes a single global `Sfx`.
+
+   Gain staging:  voice -> gameplayBus (1.0) / uiBus (0.5) -> master -> out
+   The master gain carries the persisted volume (and mute), so UI SFX
+   always sit quieter than gameplay SFX.
+   ============================================================ */
+
+'use strict';
+
+const Sfx = (function () {
+  const VOL_KEY  = 'imktetris.audio.volume';
+  const MUTE_KEY = 'imktetris.audio.muted';
+
+  const DEFAULT_VOLUME = 0.7;
+  const MAX_VOICES     = 14; // hard cap to prevent audio buildup / clipping
+
+  let ctx = null;
+  let master = null;       // persisted volume / mute lives here
+  let gameplayBus = null;  // full-level gameplay SFX
+  let uiBus = null;        // quieter interface SFX
+  let activeVoices = 0;
+
+  const lastPlayed = Object.create(null); // sound name -> performance.now() ms
+
+  let volume = loadVolume();
+  let muted  = loadMuted();
+
+  function loadVolume() {
+    try {
+      const v = parseFloat(localStorage.getItem(VOL_KEY));
+      return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : DEFAULT_VOLUME;
+    } catch (_) { return DEFAULT_VOLUME; }
+  }
+
+  function loadMuted() {
+    try { return localStorage.getItem(MUTE_KEY) === '1'; } catch (_) { return false; }
+  }
+
+  // ── Context lifecycle (browser-safe, lazy) ──────────────────
+  function ensureCtx() {
+    if (ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      ctx = new AC();
+    } catch (_) { return null; }
+
+    master = ctx.createGain();
+    master.gain.value = muted ? 0 : volume;
+    master.connect(ctx.destination);
+
+    gameplayBus = ctx.createGain();
+    gameplayBus.gain.value = 1.0;
+    gameplayBus.connect(master);
+
+    uiBus = ctx.createGain();
+    uiBus.gain.value = 0.5; // interface SFX quieter than gameplay
+    uiBus.connect(master);
+
+    return ctx;
+  }
+
+  // Resume/create the context from a trusted gesture. Idempotent.
+  function unlock() {
+    const c = ensureCtx();
+    if (!c) return;
+    if (c.state === 'suspended') c.resume();
+  }
+
+  // First user gesture unlocks audio (autoplay-policy safe).
+  (function armUnlock() {
+    const handler = () => unlock();
+    ['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
+      window.addEventListener(ev, handler, { once: true, passive: true }));
+  })();
+
+  function throttled(name, minGapMs) {
+    const now = performance.now();
+    if (lastPlayed[name] !== undefined && now - lastPlayed[name] < minGapMs) return false;
+    lastPlayed[name] = now;
+    return true;
+  }
+
+  // ── Voice builders ──────────────────────────────────────────
+  function tone(opts) {
+    const c = ensureCtx();
+    if (!c || muted) return;
+    // Only schedule on a running context so voice counting can't leak while
+    // the context is still suspended (voices would never fire `onended`).
+    if (c.state !== 'running') return;
+    if (activeVoices >= MAX_VOICES) return;
+
+    const {
+      freq, type = 'sine', dur = 0.08, attack = 0.005,
+      gain = 0.2, bus = gameplayBus, freqEnd = null, when = 0,
+    } = opts;
+
+    const t0 = c.currentTime + when;
+    const osc = c.createOscillator();
+    const g = c.createGain();
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), t0 + dur);
+
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(gain, t0 + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    osc.connect(g);
+    g.connect(bus || gameplayBus);
+
+    activeVoices++;
+    osc.onended = () => { activeVoices--; };
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  }
+
+  function noise(opts) {
+    const c = ensureCtx();
+    if (!c || muted) return;
+    if (c.state !== 'running') return;
+    if (activeVoices >= MAX_VOICES) return;
+
+    const { dur = 0.12, gain = 0.2, bus = gameplayBus, lpf = 2000, when = 0 } = opts;
+
+    const t0 = c.currentTime + when;
+    const frames = Math.max(1, Math.floor(c.sampleRate * dur));
+    const buffer = c.createBuffer(1, frames, c.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < frames; i++) data[i] = Math.random() * 2 - 1;
+
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = lpf;
+    const g = c.createGain();
+    g.gain.setValueAtTime(gain, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(bus || gameplayBus);
+
+    activeVoices++;
+    src.onended = () => { activeVoices--; };
+    src.start(t0);
+    src.stop(t0 + dur + 0.02);
+  }
+
+  // ── Sound map (soft, short, low-fatigue) ────────────────────
+  const sounds = {
+    move() {
+      if (!throttled('move', 25)) return;
+      tone({ freq: 200, type: 'triangle', dur: 0.05, gain: 0.11 });
+    },
+    rotate() {
+      if (!throttled('rotate', 30)) return;
+      tone({ freq: 320, freqEnd: 384, type: 'triangle', dur: 0.07, gain: 0.12 });
+    },
+    softdrop() {
+      if (!throttled('softdrop', 55)) return;
+      tone({ freq: 150, type: 'sine', dur: 0.035, gain: 0.07 });
+    },
+    harddrop() {
+      tone({ freq: 165, freqEnd: 60, type: 'sine', dur: 0.14, gain: 0.22 });
+      noise({ dur: 0.10, gain: 0.11, lpf: 1100 });
+    },
+    lock() {
+      if (!throttled('lock', 40)) return;
+      tone({ freq: 180, freqEnd: 140, type: 'square', dur: 0.05, gain: 0.07 });
+    },
+    // Ascending arpeggio; more lines = more notes + a sparkle on a tetris.
+    lineclear(n) {
+      const steps = Math.min(Math.max(n | 0, 1), 4);
+      const root = 392; // G4
+      const ratios = [1, 1.25, 1.5, 2, 2.5];
+      const count = steps + 1; // 2..5 notes
+      for (let i = 0; i < count; i++) {
+        tone({ freq: root * ratios[i], type: 'triangle', dur: 0.12, gain: 0.12, when: i * 0.06 });
+      }
+      if (steps === 4) {
+        tone({ freq: root * 3, type: 'sine', dur: 0.26, gain: 0.10, when: count * 0.06 });
+      }
+    },
+    levelup() {
+      const root = 523.25; // C5
+      const ratios = [1, 1.26, 1.5];
+      ratios.forEach((r, i) =>
+        tone({ freq: root * r, type: 'triangle', dur: 0.16, gain: 0.12, when: i * 0.07 }));
+    },
+    pause() {
+      tone({ freq: 440, type: 'sine', dur: 0.10, gain: 0.11 });
+      tone({ freq: 330, type: 'sine', dur: 0.14, gain: 0.11, when: 0.08 });
+    },
+    resume() {
+      tone({ freq: 330, type: 'sine', dur: 0.10, gain: 0.11 });
+      tone({ freq: 440, type: 'sine', dur: 0.14, gain: 0.11, when: 0.08 });
+    },
+    gameover() {
+      const notes = [392, 349.23, 311.13, 261.63]; // descending, somber
+      notes.forEach((f, i) =>
+        tone({ freq: f, type: 'triangle', dur: 0.32, gain: 0.14, when: i * 0.16 }));
+    },
+    uiclick() {
+      tone({ freq: 420, type: 'sine', dur: 0.045, gain: 0.16, bus: uiBus });
+    },
+    uihover() {
+      if (!throttled('uihover', 70)) return;
+      tone({ freq: 620, type: 'sine', dur: 0.03, gain: 0.05, bus: uiBus });
+    },
+  };
+
+  // ── Public API ──────────────────────────────────────────────
+  function play(name, arg) {
+    if (muted || volume <= 0) return;
+    const fn = sounds[name];
+    if (!fn) return;
+    if (!ensureCtx()) return;
+    fn(arg);
+  }
+
+  function setVolume(v) {
+    volume = Math.min(1, Math.max(0, Number(v) || 0));
+    try { localStorage.setItem(VOL_KEY, String(volume)); } catch (_) {}
+    if (master && ctx && !muted) master.gain.setTargetAtTime(volume, ctx.currentTime, 0.01);
+  }
+
+  function setMuted(m) {
+    muted = !!m;
+    try { localStorage.setItem(MUTE_KEY, muted ? '1' : '0'); } catch (_) {}
+    if (master && ctx) master.gain.setTargetAtTime(muted ? 0 : volume, ctx.currentTime, 0.01);
+  }
+
+  function toggleMute() { setMuted(!muted); return muted; }
+
+  return {
+    play,
+    unlock,
+    setVolume,
+    getVolume: () => volume,
+    setMuted,
+    toggleMute,
+    isMuted: () => muted,
+  };
+})();
+
+window.Sfx = Sfx;

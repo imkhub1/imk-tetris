@@ -630,6 +630,7 @@ function tryRotate() {
     const test = { ...current, matrix: rotated, x: current.x + kick };
     if (!collide(test)) {
       current = test;
+      Sfx.play('rotate');
       return;
     }
   }
@@ -641,7 +642,10 @@ function moveRight() { tryMove(1);  }
 
 function tryMove(dx) {
   const test = { ...current, x: current.x + dx };
-  if (!collide(test)) current = test;
+  if (!collide(test)) {
+    current = test;
+    Sfx.play('move');
+  }
 }
 
 function softDrop() {
@@ -649,6 +653,7 @@ function softDrop() {
   if (!collide(test)) {
     current = test;
     score += 1; // +1 per row on soft drop
+    Sfx.play('softdrop');
     updateHUD();
   } else {
     lockPiece();
@@ -665,14 +670,15 @@ function hardDrop() {
     dropped++;
   }
   score += dropped * 2; // +2 per cell on hard drop
+  Sfx.play('harddrop');
   triggerHardDropTrail(current, fromY, dropped);
   triggerShake(dropped);
   updateHUD();
-  lockPiece();
+  lockPiece(true);
 }
 
 // ── Lock piece ────────────────────────────────────────────────
-function lockPiece() {
+function lockPiece(viaHardDrop = false) {
   const { matrix, x, y } = current;
   for (let r = 0; r < matrix.length; r++) {
     for (let c = 0; c < matrix[r].length; c++) {
@@ -683,6 +689,9 @@ function lockPiece() {
     }
   }
   const full = getFullRows();
+  // Hard-drop impact already provides settle feedback, so skip the lock click.
+  if (!viaHardDrop) Sfx.play('lock');
+  if (full.length > 0) Sfx.play('lineclear', full.length);
   if (full.length === 0) {
     combo = 0; // reset combo on lock with no clears
     updateHUD();
@@ -729,8 +738,10 @@ function applyLineClear(rows) {
 
   lines += cleared;
   score += LINE_SCORES[cleared] * level;
+  const prevLevel = level;
   level  = startLevel + Math.floor(lines / 10);
   dropInterval = calcDropInterval(level);
+  if (level > prevLevel) Sfx.play('levelup');
   return cleared;
 }
 
@@ -1071,6 +1082,7 @@ function hideOverlay() {
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
+  Sfx.play('gameover');
 
   overlayTitle.textContent = 'GAME OVER';
   overlay.classList.remove('hidden');
@@ -1139,9 +1151,11 @@ function togglePause() {
   if (gameOver) return;
   paused = !paused;
   if (paused) {
+    Sfx.play('pause');
     cancelAnimationFrame(animId);
     showPauseMenu();
   } else {
+    Sfx.play('resume');
     hidePauseMenu();
     if (!frozen) {
       lastTime   = null;
@@ -1263,6 +1277,46 @@ document.querySelectorAll('.skin-btn').forEach(btn => {
   btn.addEventListener('click', () => setSkin(btn.dataset.skin));
 });
 
+// ── Audio controls ────────────────────────────────────────────
+const soundToggle  = document.getElementById('sound-toggle');
+const volumeSlider = document.getElementById('volume-slider');
+
+function updateSoundToggleButton() {
+  const isMuted = Sfx.isMuted();
+  const label = isMuted ? 'Unmute sound' : 'Mute sound';
+  soundToggle.setAttribute('data-mode', isMuted ? 'off' : 'on');
+  soundToggle.setAttribute('aria-label', label);
+  soundToggle.setAttribute('title', label);
+  soundToggle.setAttribute('aria-pressed', String(!isMuted));
+}
+
+soundToggle.addEventListener('click', () => {
+  Sfx.unlock();
+  const nowMuted = Sfx.toggleMute();
+  updateSoundToggleButton();
+  if (!nowMuted) Sfx.play('uiclick'); // confirm with a blip when re-enabling
+});
+
+volumeSlider.value = String(Math.round(Sfx.getVolume() * 100));
+volumeSlider.addEventListener('input', () => {
+  Sfx.unlock();
+  Sfx.setVolume(Number(volumeSlider.value) / 100);
+});
+volumeSlider.addEventListener('change', () => Sfx.play('uiclick'));
+updateSoundToggleButton();
+
+// Centralized, low-effort UI feedback for interface controls. The mute toggle
+// and Resume button handle their own semantic sounds, so they are excluded.
+const UI_SFX_SELECTOR =
+  '.theme-btn:not(.sound-toggle-btn):not(#btn-resume), .reset-btn, .skin-btn, ' +
+  '.name-save-btn, .start-theme-toggle-btn, .level-btn';
+document.addEventListener('click', (e) => {
+  if (e.target.closest(UI_SFX_SELECTOR)) Sfx.play('uiclick');
+}, true);
+document.addEventListener('mouseover', (e) => {
+  if (e.target.closest(UI_SFX_SELECTOR)) Sfx.play('uihover');
+});
+
 // ── Keyboard controls ─────────────────────────────────────────
 document.addEventListener('keydown', (e) => {
   // If the name input is focused, let it handle its own keys
@@ -1281,6 +1335,15 @@ document.addEventListener('keydown', (e) => {
     if (e.code === 'Enter' && !waitingForName) {
       init();
     }
+    return;
+  }
+
+  // One-shot actions: ignore auto-repeat so a held key can't spam the action
+  // (and its sound). Movement / soft-drop keep their repeat behavior.
+  if (e.repeat &&
+      (e.code === 'Space' || e.code === 'KeyP' || e.code === 'Escape' ||
+       e.code === 'Enter' || e.code === 'KeyF')) {
+    e.preventDefault();
     return;
   }
 

@@ -130,6 +130,7 @@
               <li><kbd>↑</kbd> / <kbd>W</kbd> / Right Click Rotate</li>
               <li><kbd>↓</kbd> / <kbd>S</kbd> Soft Drop</li>
               <li><kbd>Space</kbd> / Left Click Hard Drop</li>
+              <li><kbd>F</kbd> Freeze/Unfreeze (Testing)</li>
               <li><kbd>P</kbd> / <kbd>Esc</kbd> / <kbd>Enter</kbd> / Middle Click Pause/Resume</li>
             </ul>
           </div>
@@ -159,7 +160,10 @@
         </div>
 
         <div class="module toggle-module">
-          <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
+          <div class="toggle-btns">
+            <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
+            <button id="freeze-toggle" class="theme-btn theme-toggle-btn freeze-toggle-btn" data-mode="off" aria-label="Freeze game for testing" title="Freeze game for testing"></button>
+          </div>
         </div>
       </aside>
 

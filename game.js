@@ -61,18 +61,15 @@ const SKINS = {
       ctx.fill();
 
       if (boardIsLight) {
-        // Candy gloss: bright crown fading into a soft base shade, with a
-        // defined edge so soft pastels keep identity on a white field.
-        const g = ctx.createLinearGradient(0, ry, 0, ry + h);
-        g.addColorStop(0, 'rgba(255,255,255,0.52)');
-        g.addColorStop(0.45, 'rgba(255,255,255,0.08)');
-        g.addColorStop(0.55, 'rgba(0,0,0,0)');
-        g.addColorStop(1, 'rgba(0,0,0,0.17)');
-        ctx.fillStyle = g;
-        trace();
-        ctx.fill();
+        // Keep pastels solid on the warm field: a soft top highlight and a
+        // gentle bottom shade give light volume without a mid-block seam, and
+        // a thin neutral edge defines each cell.
+        ctx.fillStyle = 'rgba(255,255,255,0.30)';
+        ctx.fillRect(rx + 1, ry + 1, w - 2, 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.fillRect(rx + 1, ry + h - 3, w - 2, 2);
 
-        ctx.strokeStyle = 'rgba(48,54,92,0.55)';
+        ctx.strokeStyle = 'rgba(17,17,17,0.24)';
         ctx.lineWidth = 1;
         trace();
         ctx.stroke();
@@ -188,6 +185,7 @@ const overlay      = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySub   = document.getElementById('overlay-sub');
 const themeToggle  = document.getElementById('theme-toggle');
+const freezeToggle = document.getElementById('freeze-toggle');
 const pauseMenu          = document.getElementById('pause-menu');
 const btnResume          = document.getElementById('btn-resume');
 const btnRestart         = document.getElementById('btn-restart');
@@ -221,6 +219,7 @@ let dropInterval; // ms between auto-drops
 let lastTime;     // last frame timestamp
 let accumulated;  // time accumulated since last drop
 let paused;
+let frozen;
 let gameOver;
 let animId;       // requestAnimationFrame handle
 let waitingForName; // true when game-over name-entry is pending
@@ -357,6 +356,7 @@ function init() {
   lastTime    = null;
   accumulated = 0;
   paused      = false;
+  frozen      = false;
   gameOver    = false;
   waitingForName = false;
   newRecordIdx = -1;
@@ -376,6 +376,7 @@ function init() {
   updateHUD();
   hideOverlay();
   hidePauseMenu();
+  updateFreezeToggleButton();
 
   next = randomPiece();
   spawn();
@@ -775,10 +776,36 @@ function togglePause() {
     showPauseMenu();
   } else {
     hidePauseMenu();
-    lastTime   = null;
+    if (!frozen) {
+      lastTime   = null;
+      accumulated = 0;
+      animId = requestAnimationFrame(loop);
+    }
+  }
+}
+
+function updateFreezeToggleButton() {
+  const isFrozen = Boolean(frozen);
+  const label = isFrozen ? 'Unfreeze game' : 'Freeze game for testing';
+  freezeToggle.textContent = '';
+  freezeToggle.setAttribute('aria-label', label);
+  freezeToggle.setAttribute('title', label);
+  freezeToggle.setAttribute('aria-pressed', String(isFrozen));
+  freezeToggle.setAttribute('data-mode', isFrozen ? 'on' : 'off');
+}
+
+function toggleFreeze() {
+  if (gameOver) return;
+  frozen = !frozen;
+  updateFreezeToggleButton();
+  if (frozen) {
+    cancelAnimationFrame(animId);
+  } else if (!paused) {
+    lastTime = null;
     accumulated = 0;
     animId = requestAnimationFrame(loop);
   }
+  if (current) draw();
 }
 
 // ── Game Loop ─────────────────────────────────────────────────
@@ -800,7 +827,7 @@ function loop(timestamp) {
   }
 
   // If game ended or paused during this tick, don't reschedule.
-  if (gameOver || paused) return;
+  if (gameOver || paused || frozen) return;
 
   draw();
   animId = requestAnimationFrame(loop);
@@ -832,6 +859,8 @@ function toggleTheme() {
 
 updateThemeToggleButton();
 themeToggle.addEventListener('click', toggleTheme);
+updateFreezeToggleButton();
+freezeToggle.addEventListener('click', toggleFreeze);
 
 // ── Skin selector ─────────────────────────────────────────────
 document.querySelectorAll('.skin-btn').forEach(btn => {
@@ -863,26 +892,30 @@ document.addEventListener('keydown', (e) => {
     case 'ArrowLeft':
     case 'KeyA':
       e.preventDefault();
-      if (!paused) moveLeft();
+      if (!paused && !frozen) moveLeft();
       break;
     case 'ArrowRight':
     case 'KeyD':
       e.preventDefault();
-      if (!paused) moveRight();
+      if (!paused && !frozen) moveRight();
       break;
     case 'ArrowUp':
     case 'KeyW':
       e.preventDefault();
-      if (!paused) tryRotate();
+      if (!paused && !frozen) tryRotate();
       break;
     case 'ArrowDown':
     case 'KeyS':
       e.preventDefault();
-      if (!paused) softDrop();
+      if (!paused && !frozen) softDrop();
       break;
     case 'Space':
       e.preventDefault();
-      if (!paused) hardDrop();
+      if (!paused && !frozen) hardDrop();
+      break;
+    case 'KeyF':
+      e.preventDefault();
+      toggleFreeze();
       break;
     case 'KeyP':
     case 'Escape':
@@ -902,7 +935,7 @@ boardCanvas.addEventListener('mousedown', (e) => {
 
   if (e.button === 0) {
     e.preventDefault();
-    if (!paused && !hardDropMouseDown) {
+    if (!paused && !frozen && !hardDropMouseDown) {
       hardDropMouseDown = true;
       hardDrop();
     }
@@ -911,7 +944,7 @@ boardCanvas.addEventListener('mousedown', (e) => {
 
   if (e.button === 2) {
     e.preventDefault();
-    if (!paused) tryRotate();
+    if (!paused && !frozen) tryRotate();
     return;
   }
 

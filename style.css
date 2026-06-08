@@ -55,6 +55,8 @@
   /* Theme-toggle icons (masked) */
   --icon-moon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z'/%3E%3C/svg%3E");
   --icon-sun: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='4.2'/%3E%3Cline x1='12' y1='1.5' x2='12' y2='4'/%3E%3Cline x1='12' y1='20' x2='12' y2='22.5'/%3E%3Cline x1='1.5' y1='12' x2='4' y2='12'/%3E%3Cline x1='20' y1='12' x2='22.5' y2='12'/%3E%3Cline x1='4.4' y1='4.4' x2='6.2' y2='6.2'/%3E%3Cline x1='17.8' y1='17.8' x2='19.6' y2='19.6'/%3E%3Cline x1='4.4' y1='19.6' x2='6.2' y2='17.8'/%3E%3Cline x1='17.8' y1='6.2' x2='19.6' y2='4.4'/%3E%3C/svg%3E");
+  --icon-play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23000' d='M8 5.5L19 12 8 18.5z'/%3E%3C/svg%3E");
+  --icon-freeze: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2v20M4.4 6.4l15.2 11.2M19.6 6.4L4.4 17.6M3 12h18M7 4l10 16M17 4L7 20'/%3E%3C/svg%3E");
 }
 
 body {
@@ -293,6 +295,12 @@ body::before {
   gap: 0;
   align-self: flex-start;
   margin-top: 0;
+}
+
+.toggle-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 kbd {
@@ -763,36 +771,36 @@ kbd {
    Light board theme - board-scoped only (page stays dark)
    ============================================================ */
 .board-wrapper[data-theme="light"] {
-  --board-surface:       #ffffff;
-  --board-border:        #c4c9da;
-  --board-canvas-grid:   rgba(20, 24, 40, 0.07);
+  --board-surface:       #fbfbfa;
+  --board-border:        #eaeaea;
+  --board-canvas-grid:   rgba(17, 17, 17, 0.05);
 
-  --board-overlay-bg:           rgba(232, 235, 244, 0.82);
-  --board-overlay-card-bg:      rgba(252, 253, 255, 0.97);
-  --board-overlay-card-shadow:  0 20px 48px rgba(40, 52, 92, 0.20);
-  --board-overlay-border:       #ccd2e2;
-  --board-overlay-title:        #14161d;
+  --board-overlay-bg:           rgba(247, 246, 243, 0.86);
+  --board-overlay-card-bg:      #ffffff;
+  --board-overlay-card-shadow:  0 2px 8px rgba(0, 0, 0, 0.04);
+  --board-overlay-border:       #eaeaea;
+  --board-overlay-title:        #111111;
   --board-overlay-heading:      #4d7c0f;
-  --board-overlay-text:         #1c2030;
-  --board-overlay-muted:        #5a6076;
+  --board-overlay-text:         #2f3437;
+  --board-overlay-muted:        #787774;
 
-  border-color: #c8cee0;
-  background-image: linear-gradient(180deg, #ffffff 0%, #eef2fb 100%);
+  border-color: #eaeaea;
+  background: #fbfbfa;
   box-shadow:
-    0 18px 44px rgba(46, 58, 102, 0.18),
-    0 2px 6px rgba(46, 58, 102, 0.10);
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-/* Sheen lives on the wrapper div, not the canvas: a CSS background-image set
-   directly on a <canvas> makes Chromium composite its transparent cells over
-   the page (board renders dark). The canvas goes transparent so the wrapper
-   gradient shows through clearRect. */
+/* Canvas goes transparent so the warm wrapper surface shows through clearRect.
+   A CSS background set directly on a <canvas> makes Chromium composite its
+   transparent cells over the page, so the surface must live on the wrapper. */
 .board-wrapper[data-theme="light"] #board {
   background-color: transparent;
 }
 
-/* Inner frame: a hairline white lip plus a restrained lime accent ring that
-   ties the board to the page accent. Overlay (z-index 10) paints above it. */
+/* Inner frame: a single hairline white lip plus an ultra-faint neutral inset.
+   No glow, no colored ring - keeps the flat editorial surface. Overlay
+   (z-index 10) paints above it. */
 .board-wrapper[data-theme="light"]::after {
   content: "";
   position: absolute;
@@ -801,9 +809,8 @@ kbd {
   pointer-events: none;
   border-radius: inherit;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 0 0 1px rgba(190, 242, 100, 0.30),
-    inset 0 0 20px rgba(150, 200, 70, 0.10);
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.02);
 }
 
 .board-wrapper[data-theme="light"] .name-label { color: #4d7c0f; }
@@ -822,7 +829,7 @@ kbd {
 .board-wrapper[data-theme="light"] .name-save-btn:hover { background: #5c930f; }
 
 .board-wrapper[data-theme="light"] #overlay .hs-table tbody tr:nth-child(odd) td {
-  background: rgba(40, 52, 92, 0.05);
+  background: rgba(17, 17, 17, 0.035);
 }
 
 .board-wrapper[data-theme="light"] .hs-table tr.hs-new td,
@@ -935,6 +942,49 @@ kbd {
 .theme-toggle-btn[data-mode="light"]:focus-visible {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-line),
               inset 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Freeze mode (testing hold) */
+.freeze-toggle-btn::after {
+  left: auto;
+  right: 7px;
+  background-color: var(--text-dim);
+  -webkit-mask: var(--icon-play) center / contain no-repeat;
+  mask: var(--icon-play) center / contain no-repeat;
+}
+
+.freeze-toggle-btn[data-mode="on"] {
+  background: #e1f3fe;
+  border-color: rgba(31, 108, 159, 0.45);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.14);
+}
+
+.freeze-toggle-btn[data-mode="on"]::before {
+  transform: translateX(22px);
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.30), 0 0 6px rgba(31, 108, 159, 0.24);
+}
+
+.freeze-toggle-btn[data-mode="on"]::after {
+  left: 7px;
+  right: auto;
+  background-color: #1f6c9f;
+  -webkit-mask: var(--icon-freeze) center / contain no-repeat;
+  mask: var(--icon-freeze) center / contain no-repeat;
+}
+
+.freeze-toggle-btn[data-mode="on"]:hover {
+  border-color: #1f6c9f;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.14), 0 0 0 3px rgba(31, 108, 159, 0.16);
+}
+
+.freeze-toggle-btn[data-mode="on"]:active::before {
+  transform: translateX(22px) scale(0.85);
+}
+
+.freeze-toggle-btn[data-mode="on"]:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px rgba(31, 108, 159, 0.45),
+              inset 0 1px 4px rgba(0, 0, 0, 0.14);
 }
 
 /* ---------- Responsive (modest down-scale) ---------- */

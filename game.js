@@ -15,105 +15,35 @@ const MAX_HS       = 5;
 const HS_NAME_MAX_LEN = 10;
 const HS_NAME_FALLBACK = 'AAA';
 
+// Neighbor bitmask for skins that merge adjacent cells (top/right/bottom/left)
+const NB_TOP = 1, NB_RIGHT = 2, NB_BOTTOM = 4, NB_LEFT = 8;
+
 // ── Skins ─────────────────────────────────────────────────────
 const SKINS = {
-  retro: {
-    palette: [
-      null,
-      '#00f5ff', // I – cyan
-      '#ffd000', // O – yellow
-      '#aa00ff', // T – purple
-      '#00ff6a', // S – green
-      '#ff2d78', // Z – pink
-      '#1e90ff', // J – blue
-      '#ff7700', // L – orange
-    ],
-    drawBlockFn(ctx, col, row, color, size) {
-      const x = col * size;
-      const y = row * size;
-      const inset = 2;
-
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, size, size);
-
-      // Highlight top-left
-      ctx.fillStyle = 'rgba(255,255,255,0.25)';
-      ctx.fillRect(x, y, size, inset);
-      ctx.fillRect(x, y, inset, size);
-
-      // Shadow bottom-right
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
-      ctx.fillRect(x, y + size - inset, size, inset);
-      ctx.fillRect(x + size - inset, y, inset, size);
-
-      // Outer border
-      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-      ctx.lineWidth   = 0.5;
-      ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
-    },
-  },
-
-  neon: {
-    palette: [
-      null,
-      '#00ffff', // I
-      '#ffff00', // O
-      '#ff00ff', // T
-      '#00ff00', // S
-      '#ff0055', // Z
-      '#0088ff', // J
-      '#ff8800', // L
-    ],
-    drawBlockFn(ctx, col, row, color, size) {
-      const x = col * size;
-      const y = row * size;
-
-      // Parse hex to rgb for semi-transparent fill
-      const r = parseInt(color.slice(1, 3), 16);
-      const g = parseInt(color.slice(3, 5), 16);
-      const b = parseInt(color.slice(5, 7), 16);
-
-      ctx.shadowBlur  = 18;
-      ctx.shadowColor = color;
-
-      ctx.fillStyle = `rgba(${r},${g},${b},0.4)`;
-      ctx.fillRect(x, y, size, size);
-
-      ctx.strokeStyle = color;
-      ctx.lineWidth   = 1.5;
-      ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
-
-      ctx.shadowBlur  = 0;
-      ctx.shadowColor = 'transparent';
-    },
-  },
-
   pastel: {
     palette: [
       null,
-      '#75bde0', // I
-      '#f0cc78', // O
-      '#bc8fd6', // T
-      '#82cf9d', // S
-      '#ea8ea8', // Z
-      '#86aee6', // J
-      '#eab88a', // L
+      '#6cc5d4', // I – cyan/teal
+      '#f1ce72', // O – yellow
+      '#bb8ed8', // T – purple
+      '#7bc98a', // S – green
+      '#ec8ca6', // Z – pink
+      '#5a78dd', // J – royal blue
+      '#ed9f5e', // L – orange
     ],
     drawBlockFn(ctx, col, row, color, size) {
       const x = col * size;
       const y = row * size;
       const radius = 4;
+      const rx = x + 1, ry = y + 1, w = size - 2, h = size - 2;
 
-      ctx.fillStyle = color;
-
-      if (ctx.roundRect) {
+      const trace = () => {
         ctx.beginPath();
-        ctx.roundRect(x + 1, y + 1, size - 2, size - 2, radius);
-        ctx.fill();
-      } else {
+        if (ctx.roundRect) {
+          ctx.roundRect(rx, ry, w, h, radius);
+          return;
+        }
         // Manual rounded rect fallback
-        const rx = x + 1, ry = y + 1, w = size - 2, h = size - 2;
-        ctx.beginPath();
         ctx.moveTo(rx + radius, ry);
         ctx.lineTo(rx + w - radius, ry);
         ctx.arcTo(rx + w, ry, rx + w, ry + radius, radius);
@@ -124,7 +54,29 @@ const SKINS = {
         ctx.lineTo(rx, ry + radius);
         ctx.arcTo(rx, ry, rx + radius, ry, radius);
         ctx.closePath();
+      };
+
+      ctx.fillStyle = color;
+      trace();
+      ctx.fill();
+
+      if (boardIsLight) {
+        // Candy gloss: bright crown fading into a soft base shade, with a
+        // defined edge so soft pastels keep identity on a white field.
+        const g = ctx.createLinearGradient(0, ry, 0, ry + h);
+        g.addColorStop(0, 'rgba(255,255,255,0.52)');
+        g.addColorStop(0.45, 'rgba(255,255,255,0.08)');
+        g.addColorStop(0.55, 'rgba(0,0,0,0)');
+        g.addColorStop(1, 'rgba(0,0,0,0.17)');
+        ctx.fillStyle = g;
+        trace();
         ctx.fill();
+
+        ctx.strokeStyle = 'rgba(48,54,92,0.55)';
+        ctx.lineWidth = 1;
+        trace();
+        ctx.stroke();
+        return;
       }
 
       // Stronger contrast accents for readability on bright boards
@@ -139,43 +91,6 @@ const SKINS = {
       ctx.strokeStyle = 'rgba(65,70,110,0.35)';
       ctx.lineWidth = 1;
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
-    },
-  },
-
-  pixel: {
-    palette: [
-      null,
-      '#00f5ff', // I – reuse retro palette
-      '#ffd000', // O
-      '#aa00ff', // T
-      '#00ff6a', // S
-      '#ff2d78', // Z
-      '#1e90ff', // J
-      '#ff7700', // L
-    ],
-    drawBlockFn(ctx, col, row, color, size) {
-      const x = col * size;
-      const y = row * size;
-
-      // Base fill
-      ctx.fillStyle = color;
-      ctx.fillRect(x, y, size, size);
-
-      // 4×4 checkerboard pixel pattern
-      const cell = size / 4;
-      for (let pr = 0; pr < 4; pr++) {
-        for (let pc = 0; pc < 4; pc++) {
-          ctx.fillStyle = (pr + pc) % 2 === 0
-            ? 'rgba(255,255,255,0.18)'
-            : 'rgba(0,0,0,0.18)';
-          ctx.fillRect(x + pc * cell, y + pr * cell, cell, cell);
-        }
-      }
-
-      // Thick 2px inner border in darker shade
-      ctx.strokeStyle = 'rgba(0,0,0,0.55)';
-      ctx.lineWidth   = 2;
-      ctx.strokeRect(x + 1, y + 1, size - 2, size - 2);
     },
   },
 };
@@ -193,7 +108,12 @@ const COLORS = [
 ];
 
 // ── Active skin ───────────────────────────────────────────────
-let activeSkin = 'retro';
+let activeSkin = 'pastel';
+
+// Set once per render pass so skins/ghost can render light-aware without
+// querying the DOM per block. The next-piece preview always lives on the dark
+// right panel, so it forces this to false.
+let boardIsLight = false;
 
 function getPalette() {
   return SKINS[activeSkin].palette;
@@ -335,6 +255,10 @@ function resetHighScores() {
   } catch (_) {}
 }
 
+function confirmResetHighScores() {
+  return window.confirm('Are you sure you want to delete all records? This cannot be undone.');
+}
+
 const HS_NAME_CHAR_RE = /[\p{L}\p{N}]/u;
 
 function sanitizeHsName(raw) {
@@ -408,11 +332,13 @@ function hideStartScreen() {
 }
 
 startResetBtn.addEventListener('click', () => {
+  if (!confirmResetHighScores()) return;
   resetHighScores();
   renderHsTable(startHsBody, -1);
 });
 
 overlayResetBtn.addEventListener('click', () => {
+  if (!confirmResetHighScores()) return;
   resetHighScores();
   newRecordIdx = -1;
   renderHsTable(overlayHsBody, -1);
@@ -619,29 +545,32 @@ function getGhostY() {
 
 // ── Rendering ─────────────────────────────────────────────────
 function draw() {
+  boardIsLight = isBoardLightTheme();
   boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
-  // Neon background adapts to board theme while preserving the skin style.
-  if (activeSkin === 'neon') {
-    boardCtx.fillStyle = isBoardLightTheme() ? '#eef2fb' : '#000000';
-    boardCtx.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
-  }
-
+  if (boardIsLight) drawGrid();
   drawBoard();
   drawGhost();
   drawPiece(current, boardCtx, BLOCK);
 }
 
 function drawGrid() {
-  const gridColor = getComputedStyle(boardWrapper || document.body).getPropertyValue('--board-canvas-grid').trim()
-    || 'rgba(255,255,255,0.04)';
+  const gridColor = getComputedStyle(boardWrapper || document.body)
+    .getPropertyValue('--board-canvas-grid').trim() || 'rgba(20,24,40,0.08)';
   boardCtx.strokeStyle = gridColor;
-  boardCtx.lineWidth   = 0.5;
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      boardCtx.strokeRect(c * BLOCK, r * BLOCK, BLOCK, BLOCK);
-    }
+  boardCtx.lineWidth   = 1;
+  boardCtx.beginPath();
+  for (let c = 1; c < COLS; c++) {
+    const gx = c * BLOCK + 0.5;
+    boardCtx.moveTo(gx, 0);
+    boardCtx.lineTo(gx, ROWS * BLOCK);
   }
+  for (let r = 1; r < ROWS; r++) {
+    const gy = r * BLOCK + 0.5;
+    boardCtx.moveTo(0, gy);
+    boardCtx.lineTo(COLS * BLOCK, gy);
+  }
+  boardCtx.stroke();
 }
 
 function drawBoard() {
@@ -649,7 +578,7 @@ function drawBoard() {
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS; c++) {
       if (board[r][c]) {
-        drawBlock(boardCtx, c, r, palette[board[r][c]], BLOCK);
+        drawBlock(boardCtx, c, r, palette[board[r][c]], BLOCK, boardNeighbors(r, c));
       }
     }
   }
@@ -657,19 +586,15 @@ function drawBoard() {
 
 function drawGhost() {
   const gy = getGhostY();
-  const ghostAlphaBySkin = {
-    pastel: 0.32,
-    neon: 0.22,
-    retro: 0.18,
-    pixel: 0.2,
-  };
-  boardCtx.globalAlpha = ghostAlphaBySkin[activeSkin] || 0.2;
+  let ghostAlpha = 0.32;
+  if (boardIsLight) ghostAlpha *= 0.7;
+  boardCtx.globalAlpha = ghostAlpha;
   const { matrix, x } = current;
   const palette = getPalette();
   for (let r = 0; r < matrix.length; r++) {
     for (let c = 0; c < matrix[r].length; c++) {
       if (matrix[r][c]) {
-        drawBlock(boardCtx, x + c, gy + r, palette[current.colorIdx], BLOCK);
+        drawBlock(boardCtx, x + c, gy + r, palette[current.colorIdx], BLOCK, matrixNeighbors(matrix, r, c));
       }
     }
   }
@@ -682,40 +607,73 @@ function drawPiece(piece, ctx, size) {
   for (let r = 0; r < matrix.length; r++) {
     for (let c = 0; c < matrix[r].length; c++) {
       if (matrix[r][c]) {
-        drawBlock(ctx, x + c, y + r, palette[piece.colorIdx], size);
+        drawBlock(ctx, x + c, y + r, palette[piece.colorIdx], size, matrixNeighbors(matrix, r, c));
       }
     }
   }
 }
 
 /** Dispatches to the active skin's draw function. */
-function drawBlock(ctx, col, row, color, size) {
-  SKINS[activeSkin].drawBlockFn(ctx, col, row, color, size);
+function drawBlock(ctx, col, row, color, size, neighbors = 0) {
+  SKINS[activeSkin].drawBlockFn(ctx, col, row, color, size, neighbors);
+}
+
+/** 4-bit mask of same-color filled board neighbors (top/right/bottom/left). */
+function boardNeighbors(r, c) {
+  const v = board[r][c];
+  let m = 0;
+  if (r > 0 && board[r - 1][c] === v) m |= NB_TOP;
+  if (c < COLS - 1 && board[r][c + 1] === v) m |= NB_RIGHT;
+  if (r < ROWS - 1 && board[r + 1][c] === v) m |= NB_BOTTOM;
+  if (c > 0 && board[r][c - 1] === v) m |= NB_LEFT;
+  return m;
+}
+
+/** 4-bit mask of filled matrix neighbors (cells within one piece). */
+function matrixNeighbors(matrix, r, c) {
+  let m = 0;
+  if (r > 0 && matrix[r - 1][c]) m |= NB_TOP;
+  if (c < matrix[r].length - 1 && matrix[r][c + 1]) m |= NB_RIGHT;
+  if (r < matrix.length - 1 && matrix[r + 1] && matrix[r + 1][c]) m |= NB_BOTTOM;
+  if (c > 0 && matrix[r][c - 1]) m |= NB_LEFT;
+  return m;
 }
 
 function drawNextPiece() {
+  // Preview sits on the dark right panel regardless of board theme.
+  boardIsLight = false;
   nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-
-  // Neon skin: black background on next-piece canvas too
-  if (activeSkin === 'neon') {
-    nextCtx.fillStyle = '#000000';
-    nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
-  }
 
   const palette = getPalette();
   const { matrix, colorIdx } = next;
   const rows = matrix.length;
   const cols = matrix[0].length;
+  let minRow = rows;
+  let maxRow = -1;
+  let minCol = cols;
+  let maxCol = -1;
 
-  const pxOffsetX = Math.floor((nextCanvas.width  - cols * NEXT_BLOCK) / 2);
-  const pxOffsetY = Math.floor((nextCanvas.height - rows * NEXT_BLOCK) / 2);
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (!matrix[r][c]) continue;
+      if (r < minRow) minRow = r;
+      if (r > maxRow) maxRow = r;
+      if (c < minCol) minCol = c;
+      if (c > maxCol) maxCol = c;
+    }
+  }
+
+  const occupiedRows = maxRow >= minRow ? maxRow - minRow + 1 : rows;
+  const occupiedCols = maxCol >= minCol ? maxCol - minCol + 1 : cols;
+  const pxOffsetX = Math.floor((nextCanvas.width  - occupiedCols * NEXT_BLOCK) / 2) - minCol * NEXT_BLOCK;
+  const pxOffsetY = Math.floor((nextCanvas.height - occupiedRows * NEXT_BLOCK) / 2) - minRow * NEXT_BLOCK;
 
   nextCtx.save();
   nextCtx.translate(pxOffsetX, pxOffsetY);
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (matrix[r][c]) {
-        drawBlock(nextCtx, c, r, palette[colorIdx], NEXT_BLOCK);
+        drawBlock(nextCtx, c, r, palette[colorIdx], NEXT_BLOCK, matrixNeighbors(matrix, r, c));
       }
     }
   }

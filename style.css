@@ -89,33 +89,49 @@ body::before {
   position: relative;
   z-index: 1;
   display: flex;
-  align-items: stretch;
-  gap: 22px;
+  align-items: center;
+  justify-content: center;
+  width: 680px;
+  min-height: 600px;
 }
 
 /* ---------- Panels ---------- */
 .panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: 156px;
+  width: 170px;
 }
 
-.panel-left  { justify-content: flex-start; }
-.panel-right { justify-content: flex-start; }
+.panel-left  {
+  left: 0;
+  justify-content: center;
+  gap: 28px;
+  padding: 0;
+}
+
+.panel-right {
+  right: 0;
+  justify-content: center;
+  gap: 26px;
+  padding: 0;
+}
 
 /* ---------- Brand ---------- */
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  margin-bottom: 6px;
+  gap: 12px;
+  margin-bottom: 0;
 }
 
 .brand-mark {
   flex: none;
-  width: 30px;
-  height: 20px;
+  width: 40px;
+  height: 26px;
 }
 
 .brand-mark rect { fill: var(--text-dim); }
@@ -128,25 +144,27 @@ body::before {
 }
 
 .brand-word .b1 {
-  font-size: 0.62rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.34em;
   color: var(--text-faint);
 }
 
 .brand-word .b2 {
-  font-size: 1.18rem;
+  font-size: 2.05rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   color: var(--text);
 }
 
 /* ---------- Stat console ---------- */
 .stats {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-self: flex-start;
+  width: 142px;
+  margin-right: 0;
 }
 
 .info-block {
@@ -157,7 +175,7 @@ body::before {
 }
 
 .stats .info-block + .info-block {
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .label {
@@ -201,20 +219,27 @@ body::before {
 
 /* ---------- Right-panel modules ---------- */
 .module {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  background: var(--surface);
-  padding: 12px 13px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.next-block { align-items: stretch; }
+.next-block {
+  position: static;
+  align-items: flex-start;
+  align-self: flex-start;
+  margin-top: 0;
+}
+
+.next-block.info-block {
+  padding: 0;
+  gap: 0;
+}
 
 #next {
   display: block;
-  margin: 0 auto;
+  margin: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-btn);
   background-color: var(--surface-2);
@@ -224,9 +249,13 @@ body::before {
 .skin-btns {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-btn);
   overflow: hidden;
+}
+
+.skin-selector {
+  position: static;
+  width: 122px;
+  margin-top: 0;
 }
 
 .skin-btn {
@@ -239,7 +268,7 @@ body::before {
   background: var(--surface-2);
   border: none;
   border-bottom: 1px solid var(--border);
-  padding: 9px 12px;
+  padding: 5px 6px;
   cursor: pointer;
   text-align: left;
   transition: color 0.18s, background 0.18s, box-shadow 0.18s;
@@ -257,10 +286,13 @@ body::before {
 
 /* ---------- Board-theme toggle module ---------- */
 .toggle-module {
+  position: static;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 0;
+  align-self: flex-start;
+  margin-top: 0;
 }
 
 kbd {
@@ -572,8 +604,8 @@ kbd {
   background: var(--board-surface);
   border: 1px solid var(--board-overlay-border);
   border-radius: var(--radius-btn);
-  padding: 8px 12px;
-  width: 190px;
+  padding: 8px 10px;
+  width: calc(10ch + 1.2em + 20px);
   text-align: center;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -731,9 +763,9 @@ kbd {
    Light board theme - board-scoped only (page stays dark)
    ============================================================ */
 .board-wrapper[data-theme="light"] {
-  --board-surface:       #e9ecf4;
+  --board-surface:       #ffffff;
   --board-border:        #c4c9da;
-  --board-canvas-grid:   rgba(20, 24, 40, 0.08);
+  --board-canvas-grid:   rgba(20, 24, 40, 0.07);
 
   --board-overlay-bg:           rgba(232, 235, 244, 0.82);
   --board-overlay-card-bg:      rgba(252, 253, 255, 0.97);
@@ -743,6 +775,35 @@ kbd {
   --board-overlay-heading:      #4d7c0f;
   --board-overlay-text:         #1c2030;
   --board-overlay-muted:        #5a6076;
+
+  border-color: #c8cee0;
+  background-image: linear-gradient(180deg, #ffffff 0%, #eef2fb 100%);
+  box-shadow:
+    0 18px 44px rgba(46, 58, 102, 0.18),
+    0 2px 6px rgba(46, 58, 102, 0.10);
+}
+
+/* Sheen lives on the wrapper div, not the canvas: a CSS background-image set
+   directly on a <canvas> makes Chromium composite its transparent cells over
+   the page (board renders dark). The canvas goes transparent so the wrapper
+   gradient shows through clearRect. */
+.board-wrapper[data-theme="light"] #board {
+  background-color: transparent;
+}
+
+/* Inner frame: a hairline white lip plus a restrained lime accent ring that
+   ties the board to the page accent. Overlay (z-index 10) paints above it. */
+.board-wrapper[data-theme="light"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(190, 242, 100, 0.30),
+    inset 0 0 20px rgba(150, 200, 70, 0.10);
 }
 
 .board-wrapper[data-theme="light"] .name-label { color: #4d7c0f; }

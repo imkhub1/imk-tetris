@@ -482,6 +482,15 @@ kbd {
   color: var(--board-overlay-title);
   text-align: center;
   line-height: 1.25;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Focus is set programmatically for screen readers only (tabindex="-1");
+   hide the visible focus box so the heading doesn't look selected. */
+.overlay-title:focus,
+.overlay-title:focus-visible {
+  outline: none;
 }
 
 .overlay-sub {

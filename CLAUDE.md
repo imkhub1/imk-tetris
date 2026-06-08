@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Communication style
+
+When working in this repository, activate the `caveman` skill at the start of the session (invoke it via the Skill tool before responding to the first request). If the skill is not available in the current environment, continue normally without it.
+
 ## Running the game
 
 No build step — open `index.html` directly or serve locally:

@@ -297,6 +297,16 @@ body::before {
   box-shadow: inset 0 0 0 1px var(--board-frame-divider);
 }
 
+/* Quick crossfade flash when switching skins (active piece + preview). */
+@keyframes skin-swap {
+  0%   { opacity: 0.35; filter: brightness(1.5) saturate(1.25); }
+  100% { opacity: 1;    filter: none; }
+}
+#board.skin-swap,
+#next.skin-swap {
+  animation: skin-swap 0.28s ease-out;
+}
+
 /* ---------- Right-panel modules ---------- */
 .module {
   padding: 0;

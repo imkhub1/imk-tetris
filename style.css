@@ -3,7 +3,7 @@
    Vanilla CSS. Geometric sans + mono numerals, single lime accent.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;700&display=swap');
 
 /* ---------- Reset & base ---------- */
 *, *::before, *::after {
@@ -13,25 +13,34 @@
 }
 
 :root {
-  /* Page-level palette (always dark) */
+  /* =========================================================
+     Design tokens — dark (default). Semantic groups:
+     primario · neutros · superficie · acento
+     ========================================================= */
+
+  /* Neutros (page background scale, always dark here) */
   --bg:            #0b0c10;
   --surface:       #14161c;
   --surface-2:     #1a1d25;
   --border:        #242832;
   --border-strong: #333845;
-  --text:          #f2f3f5;
-  --text-dim:      #98a0ad;
-  --text-faint:    #5d6473;
 
-  /* Single accent */
+  /* Tipografía / texto */
+  --text:          #f2f3f5;
+  --text-dim:      #a7afbd;
+  --text-faint:    #8a92a3;
+
+  /* Acento primario (brand) */
+  --primary:       #bef264;
+  --primary-strong:#d3ff7e;
   --accent:        #bef264;
   --accent-strong: #d3ff7e;
   --accent-soft:   rgba(190, 242, 100, 0.14);
   --accent-line:   rgba(190, 242, 100, 0.55);
 
   /* Type */
-  --font-ui:   "Space Grotesk", system-ui, -apple-system, Segoe UI, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-ui:   "Geist", system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Shape scale (locked): cards 12px, controls 8px, toggle pill */
   --radius-card: 12px;
@@ -202,7 +211,36 @@ body::before {
 .info-block:first-child .value { color: var(--accent); }
 
 /* ---------- Board wrapper ---------- */
+/* The board is ALWAYS dark. Re-declare the full token contract here so the
+   board and its children (overlay, pause menu, name entry) never inherit the
+   hub's light theme tokens set on <html data-theme="light">. */
 .board-wrapper {
+  --bg:            #0b0c10;
+  --surface:       #14161c;
+  --surface-2:     #1a1d25;
+  --border:        #242832;
+  --border-strong: #333845;
+  --text:          #f2f3f5;
+  --text-dim:      #a7afbd;
+  --text-faint:    #8a92a3;
+  --accent:        #bef264;
+  --accent-strong: #d3ff7e;
+  --accent-soft:   rgba(190, 242, 100, 0.14);
+  --accent-line:   rgba(190, 242, 100, 0.55);
+
+  --board-surface:       #0d0f14;
+  --board-border:        #2b303b;
+  --board-canvas-grid:   rgba(255, 255, 255, 0.045);
+  --board-overlay-bg:           rgba(9, 10, 14, 0.78);
+  --board-overlay-card-bg:      rgba(20, 23, 30, 0.96);
+  --board-overlay-card-shadow:  0 24px 60px rgba(0, 0, 0, 0.55),
+                                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --board-overlay-border:       #2d323d;
+  --board-overlay-title:        var(--text);
+  --board-overlay-heading:      var(--accent);
+  --board-overlay-text:         var(--text);
+  --board-overlay-muted:        var(--text-dim);
+
   position: relative;
   align-self: center;
   border: 1px solid var(--board-border);
@@ -396,8 +434,8 @@ kbd {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(0.98); }
 }
 
 @keyframes fade-in {
@@ -580,6 +618,141 @@ kbd {
 .reset-btn:hover {
   color: var(--board-overlay-title);
   border-color: var(--board-overlay-muted);
+}
+
+/* ---------- Start screen controls (reset button + theme toggle) ---------- */
+.start-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.start-theme-toggle-btn {
+  flex: none;
+  width: 48px;
+  height: 26px;
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--board-overlay-border);
+  background: var(--board-surface-2);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
+  color: transparent;
+  font-size: 0;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.start-theme-toggle-btn:hover {
+  border-color: var(--board-overlay-border);
+  color: transparent;
+  background: var(--board-surface-2);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.03);
+}
+
+/* Knob */
+.start-theme-toggle-btn::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #dfe3ec;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  transition:
+    transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.3s ease;
+  z-index: 2;
+}
+
+/* Icon */
+.start-theme-toggle-btn::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  background-color: var(--board-overlay-muted);
+  -webkit-mask: var(--icon-moon) center / contain no-repeat;
+  mask: var(--icon-moon) center / contain no-repeat;
+  pointer-events: none;
+  transition: background-color 0.25s ease;
+  z-index: 1;
+}
+
+.start-theme-toggle-btn:active::before { transform: scale(0.85); }
+
+.start-theme-toggle-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--board-overlay-bg), 0 0 0 4px var(--board-overlay-accent-line),
+              inset 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Light mode (board light) */
+.start-theme-toggle-btn[data-mode="light"] {
+  background: rgba(191, 242, 100, 0.15);
+  border-color: rgba(191, 242, 100, 0.55);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.start-theme-toggle-btn[data-mode="light"]::before {
+  transform: translateX(22px);
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 6px rgba(191, 242, 100, 0.15);
+}
+
+.start-theme-toggle-btn[data-mode="light"]::after {
+  left: 7px;
+  right: auto;
+  background-color: rgba(191, 242, 100, 1);
+  -webkit-mask: var(--icon-sun) center / contain no-repeat;
+  mask: var(--icon-sun) center / contain no-repeat;
+}
+
+.start-theme-toggle-btn[data-mode="light"]:hover {
+  border-color: rgba(191, 242, 100, 1);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(191, 242, 100, 0.15);
+}
+
+.start-theme-toggle-btn[data-mode="light"]:active::before {
+  transform: translateX(22px) scale(0.85);
+}
+
+.start-theme-toggle-btn[data-mode="light"]:focus-visible {
+  box-shadow: 0 0 0 2px var(--board-overlay-bg), 0 0 0 4px rgba(191, 242, 100, 0.55),
+              inset 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Light hub theme — start-theme-toggle colors should match light palette */
+html[data-theme="light"] .start-theme-toggle-btn {
+  border-color: var(--border-strong);
+  background: #e7e5dd;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="light"] .start-theme-toggle-btn::before,
+html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"]::before {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="light"] .start-theme-toggle-btn::after {
+  background-color: #54524c;
+}
+
+html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
+  background: rgba(63, 98, 18, 0.20);
+  border-color: var(--accent-line);
 }
 
 /* ---------- Name entry ---------- */
@@ -768,73 +941,84 @@ kbd {
 }
 
 /* ============================================================
-   Light board theme - board-scoped only (page stays dark)
+   Light hub theme — themes the page/panels/sidebars/start screen.
+   The board stays dark (pinned in `.board-wrapper`). Warm-monochrome,
+   editorial palette (minimalist-ui base). All pairs checked for WCAG AA.
    ============================================================ */
-.board-wrapper[data-theme="light"] {
-  --board-surface:       #fbfbfa;
-  --board-border:        #eaeaea;
-  --board-canvas-grid:   rgba(17, 17, 17, 0.05);
+html[data-theme="light"] {
+  /* Neutros */
+  --bg:            #f5f4f0;
+  --surface:       #ffffff;
+  --surface-2:     #ecebe5;
+  --border:        #dcdbd4;
+  --border-strong: #c4c2b8;
 
-  --board-overlay-bg:           rgba(247, 246, 243, 0.86);
-  --board-overlay-card-bg:      #ffffff;
-  --board-overlay-card-shadow:  0 2px 8px rgba(0, 0, 0, 0.04);
-  --board-overlay-border:       #eaeaea;
-  --board-overlay-title:        #111111;
-  --board-overlay-heading:      #4d7c0f;
-  --board-overlay-text:         #2f3437;
-  --board-overlay-muted:        #787774;
+  /* Texto (charcoal sobre bone) */
+  --text:          #1f2328;
+  --text-dim:      #54524c;
+  --text-faint:    #5f5d56;
 
-  border-color: #eaeaea;
-  background: #fbfbfa;
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.03),
-    0 2px 8px rgba(0, 0, 0, 0.04);
+  /* Acento (lime no contrasta en claro → oliva accesible) */
+  --primary:       #3f6212;
+  --primary-strong:#4d7c0f;
+  --accent:        #3f6212;
+  --accent-strong: #4d7c0f;
+  --accent-soft:   rgba(63, 98, 18, 0.12);
+  --accent-line:   rgba(63, 98, 18, 0.55);
+
+  /* Tokens compartidos por la pantalla de inicio (fuera del board) */
+  --board-overlay-border:  #dcdbd4;
+  --board-overlay-title:   #1f2328;
+  --board-overlay-heading: #3f6212;
+  --board-overlay-text:    #2f3437;
+  --board-overlay-muted:   #5f5d56;
 }
 
-/* Canvas goes transparent so the warm wrapper surface shows through clearRect.
-   A CSS background set directly on a <canvas> makes Chromium composite its
-   transparent cells over the page, so the surface must live on the wrapper. */
-.board-wrapper[data-theme="light"] #board {
-  background-color: transparent;
+/* Quiet warm light-spot instead of the dark bloom */
+html[data-theme="light"] body::before {
+  background:
+    radial-gradient(58% 46% at 50% 36%, rgba(63, 98, 18, 0.05), transparent 70%),
+    radial-gradient(120% 120% at 50% 0%, rgba(0, 0, 0, 0.015), transparent 60%);
 }
 
-/* Inner frame: a single hairline white lip plus an ultra-faint neutral inset.
-   No glow, no colored ring - keeps the flat editorial surface. Overlay
-   (z-index 10) paints above it. */
-.board-wrapper[data-theme="light"]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  pointer-events: none;
-  border-radius: inherit;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+/* Hardcoded dark surfaces that need a light counterpart */
+html[data-theme="light"] .stats .info-block + .info-block {
+  border-top-color: rgba(0, 0, 0, 0.08);
 }
 
-.board-wrapper[data-theme="light"] .name-label { color: #4d7c0f; }
-
-.board-wrapper[data-theme="light"] .name-input:focus {
-  border-color: #4d7c0f;
-  box-shadow: 0 0 0 3px rgba(77, 124, 15, 0.18);
+html[data-theme="light"] .skin-btn:hover {
+  background: #e3e1d9;
 }
 
-.board-wrapper[data-theme="light"] .name-save-btn {
-  color: #f7faef;
-  background: #4d7c0f;
-  border-color: #4d7c0f;
+html[data-theme="light"] .start-screen {
+  background:
+    radial-gradient(70% 55% at 50% 38%, rgba(63, 98, 18, 0.05), transparent 70%),
+    rgba(245, 244, 240, 0.94);
 }
 
-.board-wrapper[data-theme="light"] .name-save-btn:hover { background: #5c930f; }
-
-.board-wrapper[data-theme="light"] #overlay .hs-table tbody tr:nth-child(odd) td {
-  background: rgba(17, 17, 17, 0.035);
+/* Theme/freeze toggles live in the hub — retune the track/knob for light.
+   A hairline dark ring keeps the knob boundary visible (WCAG 1.4.11) on the
+   pale track in both the off and on (data-mode="light") states. */
+html[data-theme="light"] .theme-toggle-btn {
+  border-color: var(--border-strong);
+  background: #e7e5dd;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-.board-wrapper[data-theme="light"] .hs-table tr.hs-new td,
-.board-wrapper[data-theme="light"] .hs-table tr.hs-new td:nth-child(1) {
-  color: #4d7c0f;
+html[data-theme="light"] .theme-toggle-btn::before,
+html[data-theme="light"] .theme-toggle-btn[data-mode="light"]::before,
+html[data-theme="light"] .freeze-toggle-btn[data-mode="on"]::before {
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="light"] .theme-toggle-btn::after {
+  background-color: #54524c;
+}
+
+html[data-theme="light"] .theme-toggle-btn[data-mode="light"] {
+  background: rgba(63, 98, 18, 0.20);
+  border-color: var(--accent-line);
 }
 
 /* ============================================================

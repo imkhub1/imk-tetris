@@ -141,7 +141,7 @@ const SKINS = {
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
     },
   },
-  aurora: {
+  glass: {
     palette: [
       null,
       '#3de8ff', // I – cyan
@@ -159,7 +159,7 @@ const SKINS = {
       const ry = y + 1;
       const w = size - 2;
       const h = size - 2;
-      const t = renderClock || performance.now() * 0.001;
+      const t = renderClock;
       const pulse = (Math.sin(t * 4 + col * 0.55 + row * 0.45) + 1) * 0.5;
 
       const base = ctx.createLinearGradient(x, y, x + size, y + size);
@@ -247,6 +247,15 @@ let activeSkin = 'pastel';
 let boardIsLight = false;
 let renderClock = 0;
 
+// Skins animate the board canvas via JS; honor the OS reduced-motion setting.
+const prefersReducedMotion =
+  !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+// Frozen timestamp when reduced motion is requested, so glass renders static.
+function skinClock() {
+  return prefersReducedMotion ? 0 : performance.now() * 0.001;
+}
+
 function getPalette() {
   return SKINS[activeSkin].palette;
 }
@@ -331,6 +340,7 @@ const startLevelDisplay  = document.getElementById('start-level-display');
 const startScreen     = document.getElementById('start-screen');
 const startHsBody     = document.getElementById('start-hs-body');
 const startResetBtn   = document.getElementById('start-reset-btn');
+const startThemeToggle = document.getElementById('start-theme-toggle');
 
 const nameEntry    = document.getElementById('name-entry');
 const nameInput    = document.getElementById('name-input');
@@ -497,9 +507,10 @@ function init() {
   newRecordIdx = -1;
   hardDropMouseDown = false;
 
-  // Load saved skin preference
+  // Load saved skin preference (migrate legacy 'aurora' -> 'glass')
   try {
-    const saved = localStorage.getItem('imktetris.skin');
+    let saved = localStorage.getItem('imktetris.skin');
+    if (saved === 'aurora') saved = 'glass';
     if (saved && SKINS[saved]) {
       activeSkin = saved;
       document.querySelectorAll('.skin-btn').forEach(btn => {
@@ -665,7 +676,8 @@ function calcDropInterval(lvl) {
 }
 
 function isBoardLightTheme() {
-  return !!boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
+  // Board is always dark now; the light/dark toggle themes the hub, not the board.
+  return false;
 }
 
 // ── Ghost piece ───────────────────────────────────────────────
@@ -682,7 +694,7 @@ function getGhostY() {
 // ── Rendering ─────────────────────────────────────────────────
 function draw() {
   boardIsLight = isBoardLightTheme();
-  renderClock = performance.now() * 0.001;
+  renderClock = skinClock();
   boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
   if (boardIsLight) drawGrid();
@@ -777,9 +789,9 @@ function matrixNeighbors(matrix, r, c) {
 }
 
 function drawNextPiece() {
-  // Preview sits on the dark right panel regardless of board theme.
+  // Preview sits on the dark right panel regardless of hub theme.
   boardIsLight = false;
-  renderClock = performance.now() * 0.001;
+  renderClock = skinClock();
   nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
 
   const palette = getPalette();
@@ -971,31 +983,45 @@ function loop(timestamp) {
 }
 
 // ── Theme ──────────────────────────────────────────────────────
+// The toggle themes the whole hub (page, panels, sidebars) while the board
+// itself stays dark at all times. State lives on <html data-theme="light">.
+function isHubLight() {
+  return document.documentElement.getAttribute('data-theme') === 'light';
+}
+
 function updateThemeToggleButton() {
-  const isLight = boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
+  const isLight = isHubLight();
   const label = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+  
+  // Update hub toggle
   themeToggle.textContent = '';
   themeToggle.setAttribute('aria-label', label);
   themeToggle.setAttribute('title', label);
   themeToggle.setAttribute('aria-pressed', String(isLight));
   themeToggle.setAttribute('data-mode', isLight ? 'light' : 'dark');
+  
+  // Update start-screen toggle to match
+  startThemeToggle.textContent = '';
+  startThemeToggle.setAttribute('aria-label', label);
+  startThemeToggle.setAttribute('title', label);
+  startThemeToggle.setAttribute('aria-pressed', String(isLight));
+  startThemeToggle.setAttribute('data-mode', isLight ? 'light' : 'dark');
 }
 
 function toggleTheme() {
-  const isLight = boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
-  if (isLight) {
-    boardWrapper.removeAttribute('data-theme');
+  const goingLight = !isHubLight();
+  if (goingLight) {
+    document.documentElement.setAttribute('data-theme', 'light');
   } else {
-    if (boardWrapper) {
-      boardWrapper.setAttribute('data-theme', 'light');
-    }
+    document.documentElement.removeAttribute('data-theme');
   }
+  try { localStorage.setItem('imktetris.theme', goingLight ? 'light' : 'dark'); } catch (_) {}
   updateThemeToggleButton();
-  if (current) draw();
 }
 
 updateThemeToggleButton();
 themeToggle.addEventListener('click', toggleTheme);
+startThemeToggle.addEventListener('click', toggleTheme);
 updateFreezeToggleButton();
 freezeToggle.addEventListener('click', toggleFreeze);
 

@@ -195,12 +195,18 @@
           <div class="toggle-btns">
             <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
             <button id="freeze-toggle" class="theme-btn theme-toggle-btn freeze-toggle-btn" data-mode="off" aria-label="Freeze game for testing" title="Freeze game for testing"></button>
+            <button id="sound-toggle" class="theme-btn theme-toggle-btn sound-toggle-btn" data-mode="on" aria-label="Mute sound" title="Mute sound"></button>
           </div>
+          <label class="volume-control">
+            <span class="visually-hidden">Master volume</span>
+            <input id="volume-slider" class="volume-slider" type="range" min="0" max="100" value="70" aria-label="Master volume" />
+          </label>
         </div>
       </aside>
 
     </div>
 
+    <script src="audio.js"></script>
     <script src="game.js"></script>
   </body>
 </html>

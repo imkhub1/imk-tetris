@@ -23,6 +23,8 @@ const Sfx = (function () {
   let master = null;       // persisted volume / mute lives here
   let gameplayBus = null;  // full-level gameplay SFX
   let uiBus = null;        // quieter interface SFX
+  let ambientBus = null;   // background ambience (under master, so mute/volume apply)
+  let ambient = null;      // active ambience graph, or null when stopped
   let activeVoices = 0;
 
   const lastPlayed = Object.create(null); // sound name -> performance.now() ms
@@ -61,6 +63,12 @@ const Sfx = (function () {
     uiBus = ctx.createGain();
     uiBus.gain.value = 0.5; // interface SFX quieter than gameplay
     uiBus.connect(master);
+
+    // Ambience sits under master too, so the persisted volume/mute affect it.
+    // Kept distinctly quiet so it never competes with gameplay SFX.
+    ambientBus = ctx.createGain();
+    ambientBus.gain.value = 0.34;
+    ambientBus.connect(master);
 
     return ctx;
   }
@@ -211,6 +219,17 @@ const Sfx = (function () {
     uiclick() {
       tone({ freq: 420, type: 'sine', dur: 0.045, gain: 0.16, bus: uiBus });
     },
+    // Bright "here we go" flourish when launching a game from the start screen.
+    gamestart() {
+      const notes = [392, 523.25, 659.25]; // G4 → C5 → E5 rising triad
+      notes.forEach((f, i) =>
+        tone({ freq: f, type: 'triangle', dur: 0.18, gain: 0.13, when: i * 0.08 }));
+      tone({ freq: 784, type: 'sine', dur: 0.22, gain: 0.10, when: 0.24 }); // sparkle
+    },
+    // Single soft blip used by the pre-game 3-2-1 countdown.
+    countbeep(go) {
+      tone({ freq: go ? 660 : 440, type: 'sine', dur: go ? 0.18 : 0.09, gain: 0.13 });
+    },
   };
 
   // ── Public API ──────────────────────────────────────────────
@@ -218,8 +237,88 @@ const Sfx = (function () {
     if (muted || volume <= 0) return;
     const fn = sounds[name];
     if (!fn) return;
-    if (!ensureCtx()) return;
+    const c = ensureCtx();
+    if (!c) return;
+    // Autoplay policy: the very first gesture's resume() is async, so the
+    // context may still be 'suspended' on this tick. Defer the voice until the
+    // context is actually running so the sound isn't silently dropped.
+    if (c.state !== 'running') {
+      c.resume().then(() => { if (!muted && volume > 0) fn(arg); }).catch(() => {});
+      return;
+    }
     fn(arg);
+  }
+
+  // ── Ambient bed ─────────────────────────────────────────────
+  // A slow, low evolving pad built from detuned oscillators with a gentle
+  // filter LFO. Long-lived nodes (not voice-counted) routed through ambientBus
+  // -> master, so mute/volume apply. Safe to start on a suspended context: the
+  // oscillators simply begin sounding once the context resumes.
+  function startAmbient() {
+    const c = ensureCtx();
+    if (!c) return;
+    if (ambient) return; // already running
+    if (c.state !== 'running') c.resume().catch(() => {});
+
+    const now = c.currentTime;
+    const out = c.createGain();
+    out.gain.setValueAtTime(0.0001, now);
+    out.gain.linearRampToValueAtTime(1, now + 1.6); // fade in
+    out.connect(ambientBus);
+
+    const filter = c.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 600;
+    filter.Q.value = 0.7;
+    filter.connect(out);
+
+    // Slow filter sweep for movement.
+    const lfo = c.createOscillator();
+    const lfoGain = c.createGain();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.05;
+    lfoGain.gain.value = 260;
+    lfo.connect(lfoGain);
+    lfoGain.connect(filter.frequency);
+
+    // Soft detuned drone (A2 root + fifth), low gain.
+    const freqs = [110, 110 * 1.5, 220 * 1.001];
+    const detunes = [-6, +5, +9];
+    const oscs = freqs.map((f, i) => {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = 'sine';
+      o.frequency.value = f;
+      o.detune.value = detunes[i];
+      g.gain.value = i === 2 ? 0.05 : 0.09; // upper octave quieter
+      o.connect(g);
+      g.connect(filter);
+      o.start(now);
+      return o;
+    });
+    lfo.start(now);
+
+    ambient = { out, oscs, lfo };
+  }
+
+  function stopAmbient() {
+    if (!ambient) return;
+    const old = ambient;
+    ambient = null; // release the slot immediately so a restart is safe
+    const c = ctx;
+    if (!c) return;
+    const now = c.currentTime;
+    try {
+      old.out.gain.cancelScheduledValues(now);
+      old.out.gain.setValueAtTime(old.out.gain.value, now);
+      old.out.gain.linearRampToValueAtTime(0.0001, now + 0.5); // fade out
+    } catch (_) {}
+    const stopAt = now + 0.55;
+    old.oscs.forEach(o => { try { o.stop(stopAt); } catch (_) {} });
+    try { old.lfo.stop(stopAt); } catch (_) {}
+    setTimeout(() => {
+      try { old.out.disconnect(); } catch (_) {}
+    }, 800);
   }
 
   function setVolume(v) {
@@ -244,6 +343,9 @@ const Sfx = (function () {
     setMuted,
     toggleMute,
     isMuted: () => muted,
+    startAmbient,
+    stopAmbient,
+    isAmbientOn: () => !!ambient,
   };
 })();
 

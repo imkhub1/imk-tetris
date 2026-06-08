@@ -44,6 +44,7 @@
       <p class="press-enter">PRESS ENTER TO PLAY</p>
       <div class="start-controls">
         <button class="reset-btn" id="start-reset-btn">Reset Records</button>
+        <button id="start-sound-toggle" class="theme-btn theme-toggle-btn sound-toggle-btn" data-mode="on" aria-label="Mute sound" title="Mute sound"></button>
         <button id="start-theme-toggle" class="start-theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
       </div>
     </div>
@@ -86,8 +87,20 @@
       </aside>
 
       <!-- Main board -->
-      <main class="board-wrapper">
+      <div class="board-stage">
+        <div class="board-toggles" role="group" aria-label="Game toggles">
+          <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
+          <button id="sound-toggle" class="theme-btn theme-toggle-btn sound-toggle-btn" data-mode="on" aria-label="Mute sound" title="Mute sound"></button>
+          <button id="freeze-toggle" class="theme-btn theme-toggle-btn freeze-toggle-btn" data-mode="off" aria-label="Freeze game for testing" title="Freeze game for testing"></button>
+        </div>
+
+        <main class="board-wrapper">
         <canvas id="board" width="300" height="600" role="img" aria-label="Tetris game board"></canvas>
+
+        <!-- Countdown before play begins -->
+        <div id="countdown" class="countdown hidden" aria-hidden="true">
+          <span id="countdown-number" class="countdown-number"></span>
+        </div>
 
         <!-- Overlay: Game Over -->
         <div id="overlay" class="overlay hidden">
@@ -133,6 +146,15 @@
           <div class="pause-menu-buttons">
             <button id="btn-resume" class="theme-btn pause-btn">RESUME</button>
             <button id="btn-restart" class="theme-btn pause-btn">RESTART</button>
+            <button id="btn-start-screen" class="theme-btn pause-btn">START SCREEN</button>
+          </div>
+
+          <div class="pause-volume">
+            <span class="label">VOLUME</span>
+            <label class="volume-control">
+              <span class="visually-hidden">Master volume</span>
+              <input id="volume-slider" class="volume-slider" type="range" min="0" max="100" value="70" aria-label="Master volume" />
+            </label>
           </div>
 
           <div class="pause-controls">
@@ -175,6 +197,7 @@
           </div>
         </div>
       </main>
+      </div>
 
       <!-- Right panel: next piece + controls -->
       <aside class="panel panel-right">
@@ -189,18 +212,6 @@
             <button class="skin-btn" data-skin="arcade" aria-pressed="false">Arcade</button>
             <button class="skin-btn" data-skin="glass" aria-pressed="false">Glass</button>
           </div>
-        </div>
-
-        <div class="module toggle-module">
-          <div class="toggle-btns">
-            <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
-            <button id="freeze-toggle" class="theme-btn theme-toggle-btn freeze-toggle-btn" data-mode="off" aria-label="Freeze game for testing" title="Freeze game for testing"></button>
-            <button id="sound-toggle" class="theme-btn theme-toggle-btn sound-toggle-btn" data-mode="on" aria-label="Mute sound" title="Mute sound"></button>
-          </div>
-          <label class="volume-control">
-            <span class="visually-hidden">Master volume</span>
-            <input id="volume-slider" class="volume-slider" type="range" min="0" max="100" value="70" aria-label="Master volume" />
-          </label>
         </div>
       </aside>
 

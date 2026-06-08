@@ -139,8 +139,22 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 680px;
+  width: 760px;
   min-height: 600px;
+}
+
+/* Board + side toggle column travel together, centered on the page. */
+.board-stage {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.board-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: center;
 }
 
 /* ---------- Panels ---------- */
@@ -935,6 +949,18 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
   font-size: 0.66rem;
 }
 
+.pause-volume {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 84%;
+}
+
+.pause-volume .volume-control {
+  width: 100%;
+}
+
 /* Board-scoped colors so pause UI reads in light board theme */
 .pause-menu .theme-btn {
   color: var(--board-overlay-text);
@@ -1379,6 +1405,36 @@ html[data-theme="light"] .theme-toggle-btn[data-mode="light"] {
 
 .volume-slider:focus-visible {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-line);
+}
+
+/* ---------- Pre-game countdown ---------- */
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25;
+  pointer-events: none;
+  background: var(--board-overlay-bg);
+  backdrop-filter: blur(2px);
+}
+
+.countdown-number {
+  font-family: var(--font-mono);
+  font-size: 8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 26px var(--accent-soft), 0 6px 30px rgba(0, 0, 0, 0.5);
+  animation: countdown-pop 0.92s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes countdown-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  18%  { transform: scale(1.08); opacity: 1; }
+  42%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.84); opacity: 0; }
 }
 
 /* ---------- Responsive (modest down-scale) ---------- */

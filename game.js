@@ -23,6 +23,7 @@ const CLEAR_DURATION = 340; // line-clear flash + collapse
 const SPAWN_DURATION = 140; // active-piece pop-in
 const SHAKE_DURATION = 220; // hard-drop impact shake
 const TRAIL_DURATION = 240; // hard-drop motion streak + afterimages
+const COUNTDOWN_MS   = 3000; // pre-game 3-2-1 countdown (gravity blocked)
 
 // ── Brick rendering helpers ───────────────────────────────────
 /** Lighten (amt>0, toward white) or darken (amt<0, toward black) a #rrggbb color. */
@@ -360,14 +361,19 @@ const freezeToggle = document.getElementById('freeze-toggle');
 const pauseMenu          = document.getElementById('pause-menu');
 const btnResume          = document.getElementById('btn-resume');
 const btnRestart         = document.getElementById('btn-restart');
+const btnStartScreen     = document.getElementById('btn-start-screen');
 const btnLevelDec        = document.getElementById('btn-level-dec');
 const btnLevelInc        = document.getElementById('btn-level-inc');
 const startLevelDisplay  = document.getElementById('start-level-display');
+
+const countdownEl        = document.getElementById('countdown');
+const countdownNumber    = document.getElementById('countdown-number');
 
 const startScreen     = document.getElementById('start-screen');
 const startHsBody     = document.getElementById('start-hs-body');
 const startResetBtn   = document.getElementById('start-reset-btn');
 const startThemeToggle = document.getElementById('start-theme-toggle');
+const pressEnter       = document.querySelector('.press-enter');
 
 const nameEntry    = document.getElementById('name-entry');
 const nameInput    = document.getElementById('name-input');
@@ -394,6 +400,9 @@ let paused;
 let frozen;
 let gameOver;
 let animId;       // requestAnimationFrame handle
+let counting;     // true during the pre-game 3-2-1 countdown
+let countStart;   // performance timestamp when the countdown began (null until first frame)
+let countShown;   // last number rendered (so we only animate/beep on change)
 let waitingForName; // true when game-over name-entry is pending
 let newRecordIdx;   // index in highscores where new entry was inserted
 let hardDropMouseDown;
@@ -511,6 +520,36 @@ function hideStartScreen() {
   startScreen.classList.add('hidden');
 }
 
+// Launch a fresh game from the start screen (Enter or click). Plays the
+// dedicated start flourish; init() then handles ambience + countdown.
+function startGameFromStartScreen() {
+  Sfx.unlock();
+  Sfx.play('gamestart');
+  hideStartScreen();
+  init();
+}
+
+// Tear the running game down and return to the start screen.
+function returnToStartScreen() {
+  counting = false;
+  countStart = null;
+  paused = false;
+  frozen = false;
+  clearing = false;
+  gameOver = true;            // halt the loop
+  hardDropMouseDown = false;
+  if (animId) cancelAnimationFrame(animId);
+  animId = null;
+  Sfx.stopAmbient();
+  hideCountdown();
+  hidePauseMenu();
+  hideOverlay();
+  updateFreezeToggleButton();
+  board = createBoard();      // reset the playfield
+  boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+  showStartScreen();
+}
+
 startResetBtn.addEventListener('click', () => {
   if (!confirmResetHighScores()) return;
   resetHighScores();
@@ -539,6 +578,9 @@ function init() {
   paused      = false;
   frozen      = false;
   gameOver    = false;
+  counting    = true;
+  countStart  = null;
+  countShown  = null;
   waitingForName = false;
   clearing    = false;
   clearRows   = [];
@@ -568,6 +610,9 @@ function init() {
 
   next = randomPiece();
   spawn();
+
+  showCountdown();
+  Sfx.startAmbient();
 
   if (animId) cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
@@ -1081,8 +1126,12 @@ function hideOverlay() {
 // ── Game Over ─────────────────────────────────────────────────
 function endGame() {
   gameOver = true;
+  counting = false;
+  countStart = null;
+  hideCountdown();
   cancelAnimationFrame(animId);
   Sfx.play('gameover');
+  Sfx.stopAmbient();
 
   overlayTitle.textContent = 'GAME OVER';
   overlay.classList.remove('hidden');
@@ -1104,6 +1153,28 @@ function endGame() {
     overlaySub.textContent = 'Press ENTER to restart';
     overlayTitle.focus();
   }
+}
+
+// ── Countdown ─────────────────────────────────────────────────
+function showCountdown() {
+  countShown = null;
+  countdownNumber.textContent = '';
+  countdownEl.classList.remove('hidden');
+}
+
+function hideCountdown() {
+  countdownEl.classList.add('hidden');
+}
+
+function renderCountdown(n) {
+  if (n === countShown) return;
+  countShown = n;
+  countdownNumber.textContent = String(n);
+  // Restart the CSS pop animation for each new number.
+  countdownNumber.style.animation = 'none';
+  void countdownNumber.offsetWidth; // force reflow
+  countdownNumber.style.animation = '';
+  Sfx.play('countbeep', false);
 }
 
 // ── Pause Menu ────────────────────────────────────────────────
@@ -1148,14 +1219,16 @@ nameInput.addEventListener('input', () => {
 
 // ── Pause ─────────────────────────────────────────────────────
 function togglePause() {
-  if (gameOver) return;
+  if (gameOver || counting) return;
   paused = !paused;
   if (paused) {
     Sfx.play('pause');
+    Sfx.stopAmbient();
     cancelAnimationFrame(animId);
     showPauseMenu();
   } else {
     Sfx.play('resume');
+    Sfx.startAmbient();
     hidePauseMenu();
     if (!frozen) {
       lastTime   = null;
@@ -1176,7 +1249,7 @@ function updateFreezeToggleButton() {
 }
 
 function toggleFreeze() {
-  if (gameOver) return;
+  if (gameOver || counting) return;
   frozen = !frozen;
   updateFreezeToggleButton();
   if (frozen) {
@@ -1194,6 +1267,25 @@ function loop(timestamp) {
   if (!lastTime) lastTime = timestamp;
   const dt = timestamp - lastTime;
   lastTime  = timestamp;
+
+  // Pre-game countdown owns the frame: gravity is frozen until it finishes.
+  if (counting) {
+    if (countStart == null) countStart = timestamp;
+    const elapsed = timestamp - countStart;
+    if (elapsed >= COUNTDOWN_MS) {
+      counting = false;
+      countStart = null;
+      hideCountdown();
+      Sfx.play('countbeep', true); // "go" blip as the piece is released
+      accumulated = 0;     // start gravity fresh, no banked time from the count
+    } else {
+      const n = 3 - Math.floor(elapsed / 1000); // 3, 2, 1
+      renderCountdown(n);
+      draw();
+      animId = requestAnimationFrame(loop);
+      return;
+    }
+  }
 
   // Line-clear animation owns the frame: no gravity, no input-driven drops.
   if (clearing) {
@@ -1279,23 +1371,30 @@ document.querySelectorAll('.skin-btn').forEach(btn => {
 
 // ── Audio controls ────────────────────────────────────────────
 const soundToggle  = document.getElementById('sound-toggle');
+const startSoundToggle = document.getElementById('start-sound-toggle');
 const volumeSlider = document.getElementById('volume-slider');
 
 function updateSoundToggleButton() {
   const isMuted = Sfx.isMuted();
   const label = isMuted ? 'Unmute sound' : 'Mute sound';
-  soundToggle.setAttribute('data-mode', isMuted ? 'off' : 'on');
-  soundToggle.setAttribute('aria-label', label);
-  soundToggle.setAttribute('title', label);
-  soundToggle.setAttribute('aria-pressed', String(!isMuted));
+  [soundToggle, startSoundToggle].forEach((btn) => {
+    if (!btn) return;
+    btn.setAttribute('data-mode', isMuted ? 'off' : 'on');
+    btn.setAttribute('aria-label', label);
+    btn.setAttribute('title', label);
+    btn.setAttribute('aria-pressed', String(!isMuted));
+  });
 }
 
-soundToggle.addEventListener('click', () => {
+function handleSoundToggle() {
   Sfx.unlock();
   const nowMuted = Sfx.toggleMute();
   updateSoundToggleButton();
   if (!nowMuted) Sfx.play('uiclick'); // confirm with a blip when re-enabling
-});
+}
+
+soundToggle.addEventListener('click', handleSoundToggle);
+if (startSoundToggle) startSoundToggle.addEventListener('click', handleSoundToggle);
 
 volumeSlider.value = String(Math.round(Sfx.getVolume() * 100));
 volumeSlider.addEventListener('input', () => {
@@ -1322,8 +1421,7 @@ document.addEventListener('keydown', (e) => {
   // Start screen: Enter starts game
   if (!startScreen.classList.contains('hidden')) {
     if (e.code === 'Enter') {
-      hideStartScreen();
-      init();
+      startGameFromStartScreen();
     }
     return;
   }
@@ -1348,26 +1446,26 @@ document.addEventListener('keydown', (e) => {
     case 'ArrowLeft':
     case 'KeyA':
       e.preventDefault();
-      if (!paused && !frozen && !clearing) moveLeft();
+      if (!paused && !frozen && !clearing && !counting) moveLeft();
       break;
     case 'ArrowRight':
     case 'KeyD':
       e.preventDefault();
-      if (!paused && !frozen && !clearing) moveRight();
+      if (!paused && !frozen && !clearing && !counting) moveRight();
       break;
     case 'ArrowUp':
     case 'KeyW':
       e.preventDefault();
-      if (!paused && !frozen && !clearing) tryRotate();
+      if (!paused && !frozen && !clearing && !counting) tryRotate();
       break;
     case 'ArrowDown':
     case 'KeyS':
       e.preventDefault();
-      if (!paused && !frozen && !clearing) softDrop();
+      if (!paused && !frozen && !clearing && !counting) softDrop();
       break;
     case 'Space':
       e.preventDefault();
-      if (!paused && !frozen && !clearing) hardDrop();
+      if (!paused && !frozen && !clearing && !counting) hardDrop();
       break;
     case 'KeyF':
       e.preventDefault();
@@ -1391,7 +1489,7 @@ boardCanvas.addEventListener('mousedown', (e) => {
 
   if (e.button === 0) {
     e.preventDefault();
-    if (!paused && !frozen && !clearing && !hardDropMouseDown) {
+    if (!paused && !frozen && !clearing && !counting && !hardDropMouseDown) {
       hardDropMouseDown = true;
       hardDrop();
     }
@@ -1400,7 +1498,7 @@ boardCanvas.addEventListener('mousedown', (e) => {
 
   if (e.button === 2) {
     e.preventDefault();
-    if (!paused && !frozen && !clearing) tryRotate();
+    if (!paused && !frozen && !clearing && !counting) tryRotate();
     return;
   }
 
@@ -1426,6 +1524,14 @@ btnRestart.addEventListener('click', () => {
   paused = false;
   init();
 });
+
+btnStartScreen.addEventListener('click', returnToStartScreen);
+
+if (pressEnter) {
+  pressEnter.addEventListener('click', () => {
+    if (!startScreen.classList.contains('hidden')) startGameFromStartScreen();
+  });
+}
 
 function updateStartLevelDisplay() {
   startLevelDisplay.textContent = startLevel;

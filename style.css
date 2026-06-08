@@ -139,26 +139,16 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 746px;
+  width: 680px;
   min-height: 600px;
 }
 
-/* Board + a toggle column glued to its right edge, centered together. */
-.board-stage {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Vertical game-toggle column (theme / sound / freeze) beside the board,
-   sitting in its lower half so it reads as "below" the skins module. */
+/* Vertical game-toggle column (theme / sound / freeze) in right panel, below skins. */
 .board-toggles {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  align-items: center;
-  align-self: flex-end;
-  margin-bottom: 64px;
+  align-items: flex-start;
 }
 
 /* ---------- Panels ---------- */

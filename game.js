@@ -22,6 +22,7 @@ const NB_TOP = 1, NB_RIGHT = 2, NB_BOTTOM = 4, NB_LEFT = 8;
 const CLEAR_DURATION = 340; // line-clear flash + collapse
 const SPAWN_DURATION = 140; // active-piece pop-in
 const SHAKE_DURATION = 220; // hard-drop impact shake
+const TRAIL_DURATION = 240; // hard-drop motion streak + afterimages
 
 // ── Brick rendering helpers ───────────────────────────────────
 /** Lighten (amt>0, toward white) or darken (amt<0, toward black) a #rrggbb color. */
@@ -36,6 +37,15 @@ function shade(hex, amt) {
     const k = 1 + amt; r *= k; g *= k; b *= k;
   }
   return `rgb(${r | 0},${g | 0},${b | 0})`;
+}
+
+/** #rrggbb → rgba() string with the given alpha. */
+function hexToRgba(hex, a) {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${a})`;
 }
 
 /** Path a rect with per-corner radii {tl,tr,br,bl}. */
@@ -395,6 +405,7 @@ let clearStart = 0;     // performance.now() when clear anim began
 let spawnAt = 0;        // performance.now() of the last spawn (pop-in)
 let shakeStart = 0;     // performance.now() of last hard-drop impact
 let shakeAmp = 0;       // current shake amplitude (0 = inactive)
+let hardDropTrail = null; // snapshot of the last hard-drop path for the trail FX
 
 // Starting level for next game (persists across games in session)
 let startLevel = 1;
@@ -532,6 +543,7 @@ function init() {
   clearing    = false;
   clearRows   = [];
   shakeAmp    = 0;
+  hardDropTrail = null;
   newRecordIdx = -1;
   hardDropMouseDown = false;
 
@@ -644,6 +656,7 @@ function softDrop() {
 }
 
 function hardDrop() {
+  const fromY = current.y;
   let dropped = 0;
   while (true) {
     const test = { ...current, y: current.y + 1 };
@@ -652,6 +665,7 @@ function hardDrop() {
     dropped++;
   }
   score += dropped * 2; // +2 per cell on hard drop
+  triggerHardDropTrail(current, fromY, dropped);
   triggerShake(dropped);
   updateHUD();
   lockPiece();
@@ -751,6 +765,7 @@ function draw() {
 
   if (boardIsLight) drawGrid();
   drawBoard();
+  drawHardDropTrail();
   drawGhost();
   drawActivePiece();
   if (clearing) drawClearAnim();
@@ -771,6 +786,64 @@ function getShakeOffset() {
   if (t >= 1) { shakeAmp = 0; return null; }
   const a = shakeAmp * (1 - t);
   return { x: 0, y: Math.sin(t * Math.PI * 6) * a };
+}
+
+// ── Hard-drop motion trail ────────────────────────────────────
+// Purely visual: the piece has already locked at its final position. The trail
+// renders fading streaks + afterimages along the path it travelled so a hard
+// drop reads as fast motion instead of a teleport. Skipped under reduced motion.
+function triggerHardDropTrail(piece, fromY, dropped) {
+  if (prefersReducedMotion || dropped <= 0) return;
+  hardDropTrail = {
+    matrix: piece.matrix.map(row => [...row]),
+    x: piece.x,
+    colorIdx: piece.colorIdx,
+    fromY,
+    toY: piece.y,
+    start: performance.now(),
+  };
+}
+
+function drawHardDropTrail() {
+  if (!hardDropTrail) return;
+  const t = (performance.now() - hardDropTrail.start) / TRAIL_DURATION;
+  if (t >= 1) { hardDropTrail = null; return; }
+
+  const { matrix, x, colorIdx, fromY, toY } = hardDropTrail;
+  const color = getPalette()[colorIdx];
+  const fade = 1 - t;
+  const spanPx = (toY - fromY) * BLOCK;
+
+  // Vertical streaks: one gradient column per filled column of the piece,
+  // brightest near the landing point and dissolving toward the start.
+  boardCtx.save();
+  for (let c = 0; c < matrix[0].length; c++) {
+    let topR = -1, botR = -1;
+    for (let r = 0; r < matrix.length; r++) {
+      if (matrix[r][c]) { if (topR < 0) topR = r; botR = r; }
+    }
+    if (topR < 0) continue;
+    const px = (x + c) * BLOCK;
+    const yTop = (fromY + topR) * BLOCK;
+    const yBot = (toY + botR + 1) * BLOCK;
+    const grad = boardCtx.createLinearGradient(0, yTop, 0, yBot);
+    grad.addColorStop(0, hexToRgba(color, 0));
+    grad.addColorStop(1, hexToRgba(color, 0.5 * fade));
+    boardCtx.fillStyle = grad;
+    boardCtx.fillRect(px + BLOCK * 0.14, yTop, BLOCK * 0.72, yBot - yTop);
+  }
+  boardCtx.restore();
+
+  // Afterimages: a few ghost copies of the piece spaced along the path.
+  const GHOSTS = 3;
+  for (let i = 1; i <= GHOSTS; i++) {
+    const f = i / (GHOSTS + 1);
+    boardCtx.save();
+    boardCtx.globalAlpha = fade * 0.3 * f;
+    boardCtx.translate(0, -spanPx * (1 - f));
+    drawPiece({ matrix, x, y: toY, colorIdx }, boardCtx, BLOCK);
+    boardCtx.restore();
+  }
 }
 
 // ── Active-piece pop-in ───────────────────────────────────────

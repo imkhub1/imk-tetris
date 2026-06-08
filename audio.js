@@ -249,11 +249,20 @@ const Sfx = (function () {
     fn(arg);
   }
 
-  // ── Ambient bed ─────────────────────────────────────────────
-  // A slow, low evolving pad built from detuned oscillators with a gentle
-  // filter LFO. Long-lived nodes (not voice-counted) routed through ambientBus
-  // -> master, so mute/volume apply. Safe to start on a suspended context: the
-  // oscillators simply begin sounding once the context resumes.
+  // ── Ambient bed (soft lo-fi) ────────────────────────────────
+  // A gentle lo-fi music bed: a slow Imaj7–vi7–ii7–V7 pad progression run
+  // through a moving low-pass filter and a slow tremolo "wow". Chords are
+  // scheduled ahead with a look-ahead timer so they flow seamlessly and loop.
+  // All nodes route through ambientBus -> master, so mute/volume apply. Not
+  // voice-counted, so the bed never starves gameplay SFX.
+  const AMBIENT_CHORDS = [
+    [130.81, 164.81, 196.00, 246.94], // Cmaj7
+    [110.00, 130.81, 164.81, 196.00], // Am7
+    [146.83, 174.61, 220.00, 261.63], // Dm7
+    [ 98.00, 123.47, 146.83, 174.61], // G7
+  ];
+  const AMBIENT_CHORD_DUR = 3.8; // seconds each chord is held
+
   function startAmbient() {
     const c = ensureCtx();
     if (!c) return;
@@ -261,64 +270,101 @@ const Sfx = (function () {
     if (c.state !== 'running') c.resume().catch(() => {});
 
     const now = c.currentTime;
+
     const out = c.createGain();
     out.gain.setValueAtTime(0.0001, now);
-    out.gain.linearRampToValueAtTime(1, now + 1.6); // fade in
+    out.gain.linearRampToValueAtTime(1, now + 2.0); // gentle fade-in
     out.connect(ambientBus);
 
+    // Slow tremolo for a tape-ish lo-fi wobble.
+    const tremolo = c.createGain();
+    tremolo.gain.value = 0.9;
+    tremolo.connect(out);
+    const tremLfo = c.createOscillator();
+    const tremDepth = c.createGain();
+    tremLfo.type = 'sine';
+    tremLfo.frequency.value = 1.7;
+    tremDepth.gain.value = 0.1;
+    tremLfo.connect(tremDepth);
+    tremDepth.connect(tremolo.gain);
+
+    // Warm low-pass that drifts, so the pad never sounds static.
     const filter = c.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.value = 600;
-    filter.Q.value = 0.7;
-    filter.connect(out);
+    filter.frequency.value = 720;
+    filter.Q.value = 0.8;
+    filter.connect(tremolo);
+    const filtLfo = c.createOscillator();
+    const filtDepth = c.createGain();
+    filtLfo.type = 'sine';
+    filtLfo.frequency.value = 0.06;
+    filtDepth.gain.value = 240;
+    filtLfo.connect(filtDepth);
+    filtDepth.connect(filter.frequency);
 
-    // Slow filter sweep for movement.
-    const lfo = c.createOscillator();
-    const lfoGain = c.createGain();
-    lfo.type = 'sine';
-    lfo.frequency.value = 0.05;
-    lfoGain.gain.value = 260;
-    lfo.connect(lfoGain);
-    lfoGain.connect(filter.frequency);
+    tremLfo.start(now);
+    filtLfo.start(now);
 
-    // Soft detuned drone (A2 root + fifth), low gain.
-    const freqs = [110, 110 * 1.5, 220 * 1.001];
-    const detunes = [-6, +5, +9];
-    const oscs = freqs.map((f, i) => {
-      const o = c.createOscillator();
-      const g = c.createGain();
-      o.type = 'sine';
-      o.frequency.value = f;
-      o.detune.value = detunes[i];
-      g.gain.value = i === 2 ? 0.05 : 0.09; // upper octave quieter
-      o.connect(g);
-      g.connect(filter);
-      o.start(now);
-      return o;
-    });
-    lfo.start(now);
+    const liveVoices = new Set();
+    let idx = 0;
 
-    ambient = { out, oscs, lfo };
+    function playChord(at) {
+      const chord = AMBIENT_CHORDS[idx % AMBIENT_CHORDS.length];
+      idx++;
+      chord.forEach((f, i) => {
+        const o = c.createOscillator();
+        const g = c.createGain();
+        o.type = i === 0 ? 'triangle' : 'sine';
+        o.frequency.value = f;
+        o.detune.value = (i - 1.5) * 4; // subtle spread for warmth
+        const peak = i === 0 ? 0.06 : 0.042;
+        g.gain.setValueAtTime(0.0001, at);
+        g.gain.linearRampToValueAtTime(peak, at + 1.2);                   // slow swell
+        g.gain.setValueAtTime(peak, at + AMBIENT_CHORD_DUR - 1.0);
+        g.gain.exponentialRampToValueAtTime(0.0001, at + AMBIENT_CHORD_DUR + 0.7); // overlap tail
+        o.connect(g);
+        g.connect(filter);
+        o.start(at);
+        o.stop(at + AMBIENT_CHORD_DUR + 0.9);
+        liveVoices.add(o);
+        o.onended = () => liveVoices.delete(o);
+      });
+    }
+
+    // Look-ahead scheduler: keep ~1s of chords queued so playback is seamless.
+    let nextTime = now + 0.15;
+    function scheduler() {
+      while (nextTime < c.currentTime + 1.0) {
+        playChord(nextTime);
+        nextTime += AMBIENT_CHORD_DUR;
+      }
+    }
+    scheduler();
+    const timer = setInterval(scheduler, 500);
+
+    ambient = { out, tremLfo, filtLfo, timer, liveVoices };
   }
 
   function stopAmbient() {
     if (!ambient) return;
     const old = ambient;
     ambient = null; // release the slot immediately so a restart is safe
+    clearInterval(old.timer);
     const c = ctx;
     if (!c) return;
     const now = c.currentTime;
     try {
       old.out.gain.cancelScheduledValues(now);
       old.out.gain.setValueAtTime(old.out.gain.value, now);
-      old.out.gain.linearRampToValueAtTime(0.0001, now + 0.5); // fade out
+      old.out.gain.linearRampToValueAtTime(0.0001, now + 0.7); // fade out
     } catch (_) {}
-    const stopAt = now + 0.55;
-    old.oscs.forEach(o => { try { o.stop(stopAt); } catch (_) {} });
-    try { old.lfo.stop(stopAt); } catch (_) {}
+    const stopAt = now + 0.8;
+    old.liveVoices.forEach(o => { try { o.stop(stopAt); } catch (_) {} });
+    try { old.tremLfo.stop(stopAt); } catch (_) {}
+    try { old.filtLfo.stop(stopAt); } catch (_) {}
     setTimeout(() => {
       try { old.out.disconnect(); } catch (_) {}
-    }, 800);
+    }, 1100);
   }
 
   function setVolume(v) {

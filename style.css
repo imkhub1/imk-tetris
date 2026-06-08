@@ -139,16 +139,26 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 680px;
+  width: 760px;
   min-height: 600px;
 }
 
-/* Vertical game-toggle column (theme / sound / freeze) in the right panel. */
+/* Board + a toggle column glued to its right edge, centered together. */
+.board-stage {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Vertical game-toggle column (theme / sound / freeze) beside the board,
+   sitting in its lower half so it reads as "below" the skins module. */
 .board-toggles {
   display: flex;
   flex-direction: column;
   gap: 10px;
   align-items: center;
+  align-self: flex-end;
+  margin-bottom: 64px;
 }
 
 /* ---------- Panels ---------- */
@@ -911,17 +921,18 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
   backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: 18px;
-  padding: 16px;
+  gap: 11px;
+  padding: 14px;
   z-index: 20;
+  overflow-y: auto;
   animation: fade-in 0.24s ease;
 }
 
 .pause-menu-title {
   font-family: var(--font-ui);
-  font-size: 1.1rem;
+  font-size: 0.98rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -932,26 +943,27 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
 .pause-menu-buttons {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 7px;
   width: 84%;
 }
 
 .pause-btn {
   width: 100%;
-  padding: 11px;
-  font-size: 0.66rem;
+  padding: 9px;
+  font-size: 0.64rem;
 }
 
 .pause-volume {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   width: 84%;
 }
 
 .pause-volume .volume-control {
   width: 100%;
+  flex: none;
 }
 
 /* Board-scoped colors so pause UI reads in light board theme */
@@ -977,11 +989,11 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
 .pause-controls {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   width: 84%;
   border: 1px solid var(--board-overlay-border);
   border-radius: var(--radius-card);
-  padding: 12px 14px;
+  padding: 9px 12px;
 }
 
 .pause-controls-list {
@@ -996,7 +1008,7 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: 7px 0;
+  padding: 4px 0;
   border-bottom: 1px solid var(--board-overlay-border);
 }
 
@@ -1035,7 +1047,7 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
 .pause-level-select {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   width: 84%;
 }

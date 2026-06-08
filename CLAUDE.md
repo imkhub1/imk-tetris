@@ -47,13 +47,13 @@ Sound is a separate module, `audio.js`, loaded **before** `game.js` in `index.ht
 
 **Anti-spam**: per-sound cooldowns (`throttled`) plus a global `MAX_VOICES` cap. Rapid input (move/rotate/soft-drop) cannot pile up. The ambience uses dedicated long-lived nodes that are **not** voice-counted.
 
-**Ambience**: `startAmbient()` builds a slow detuned drone (oscillators + a 0.05 Hz lowpass-filter LFO) routed through `ambientBus → master`; `stopAmbient()` fades it out and tears the nodes down. `game.js` starts it when a game begins and on resume, and stops it on pause, game over, and return-to-start.
+**Ambience**: `startAmbient()` plays a soft lo-fi music bed — a slow `Cmaj7–Am7–Dm7–G7` pad progression (look-ahead scheduler) through a drifting low-pass filter and a slow tremolo, routed `→ ambientBus → master`; `stopAmbient()` fades it out and tears the nodes down. `game.js` starts it when a game begins and on resume, and stops it on pause, game over, and return-to-start.
 
 **Persistence** (localStorage): `imktetris.audio.volume` (0–1) and `imktetris.audio.muted` (`'1'`/`'0'`).
 
 **API**: `Sfx.play(name, arg)`, `Sfx.setVolume(v)`, `Sfx.getVolume()`, `Sfx.toggleMute()`, `Sfx.setMuted(m)`, `Sfx.isMuted()`, `Sfx.unlock()`, `Sfx.startAmbient()`, `Sfx.stopAmbient()`, `Sfx.isAmbientOn()`. Sound names: `move`, `rotate`, `softdrop`, `harddrop`, `lock`, `lineclear(n)`, `levelup`, `pause`, `resume`, `gameover`, `uiclick`, `gamestart`, `countbeep(go)`.
 
-`game.js` calls `Sfx.play(...)` at the matching game events and wires the `#sound-toggle` / `#start-sound-toggle` (mute, kept in sync) and the `#volume-slider` (now inside the pause menu). The light/dark, sound, and freeze toggles sit in a vertical `.board-toggles` column in the right panel, below the skin selector. Interface buttons get `uiclick` via one delegated listener. To add a new sound, add an entry to the `sounds` map in `audio.js` and call `Sfx.play('name')` at the event site.
+`game.js` calls `Sfx.play(...)` at the matching game events and wires the `#sound-toggle` / `#start-sound-toggle` (mute, kept in sync) and the `#volume-slider` (now inside the pause menu). The light/dark, sound, and freeze toggles sit in a vertical `.board-toggles` column glued to the right edge of the board (inside `.board-stage`). Interface buttons get `uiclick` via one delegated listener. To add a new sound, add an entry to the `sounds` map in `audio.js` and call `Sfx.play('name')` at the event site.
 
 **Pre-game countdown**: `init()` sets `counting = true` and shows `#countdown`; the game loop renders a 3→2→1 overlay (CSS `countdown-pop` animation, `countbeep` per number) and blocks gravity/input until it finishes, then resets `accumulated` so gravity starts fresh.
 

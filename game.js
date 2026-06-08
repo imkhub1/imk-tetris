@@ -612,7 +612,6 @@ function init() {
   spawn();
 
   showCountdown();
-  Sfx.startAmbient();
 
   if (animId) cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
@@ -1277,6 +1276,7 @@ function loop(timestamp) {
       countStart = null;
       hideCountdown();
       Sfx.play('countbeep', true); // "go" blip as the piece is released
+      Sfx.startAmbient();          // music kicks in exactly when play begins
       accumulated = 0;     // start gravity fresh, no banked time from the count
     } else {
       const n = 3 - Math.floor(elapsed / 1000); // 3, 2, 1

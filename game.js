@@ -23,27 +23,23 @@ const SKINS = {
   pastel: {
     palette: [
       null,
-      '#6cc5d4', // I – cyan/teal
-      '#f1ce72', // O – yellow
-      '#bb8ed8', // T – purple
-      '#7bc98a', // S – green
-      '#ec8ca6', // Z – pink
-      '#5a78dd', // J – royal blue
-      '#ed9f5e', // L – orange
+      '#7dd9e8', // I – cyan/teal (elevated brightness)
+      '#f3d97d', // O – yellow (refined, less saturated)
+      '#c9a8e0', // T – purple (softened)
+      '#85d99f', // S – green (lifted)
+      '#f09bb5', // Z – pink (muted)
+      '#748ae8', // J – royal blue (desaturated edge)
+      '#f0ab6f', // L – orange (warmed)
     ],
     drawBlockFn(ctx, col, row, color, size) {
       const x = col * size;
       const y = row * size;
-      const radius = 4;
-      const rx = x + 1, ry = y + 1, w = size - 2, h = size - 2;
+      const rx = x + 1.5, ry = y + 1.5, w = size - 3, h = size - 3;
+      const radius = 3;
 
-      const trace = () => {
-        ctx.beginPath();
-        if (ctx.roundRect) {
-          ctx.roundRect(rx, ry, w, h, radius);
-          return;
-        }
-        // Manual rounded rect fallback
+      // Minimal rounded fill
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(rx, ry, w, h, radius) : (() => {
         ctx.moveTo(rx + radius, ry);
         ctx.lineTo(rx + w - radius, ry);
         ctx.arcTo(rx + w, ry, rx + w, ry + radius, radius);
@@ -53,53 +49,48 @@ const SKINS = {
         ctx.arcTo(rx, ry + h, rx, ry + h - radius, radius);
         ctx.lineTo(rx, ry + radius);
         ctx.arcTo(rx, ry, rx + radius, ry, radius);
-        ctx.closePath();
-      };
-
+      })();
       ctx.fillStyle = color;
-      trace();
       ctx.fill();
 
       if (boardIsLight) {
-        // Keep pastels solid on the warm field: a soft top highlight and a
-        // gentle bottom shade give light volume without a mid-block seam, and
-        // a thin neutral edge defines each cell.
-        ctx.fillStyle = 'rgba(255,255,255,0.30)';
-        ctx.fillRect(rx + 1, ry + 1, w - 2, 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.12)';
-        ctx.fillRect(rx + 1, ry + h - 3, w - 2, 2);
-
-        ctx.strokeStyle = 'rgba(17,17,17,0.24)';
-        ctx.lineWidth = 1;
-        trace();
+        // Light mode: subtle depth without seam
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(rx + 0.5, ry + 0.5, w - 1, 1.5);
+        ctx.fillStyle = 'rgba(0,0,0,0.08)';
+        ctx.fillRect(rx + 0.5, ry + h - 2, w - 1, 1.5);
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(rx, ry, w, h, radius) : null;
         ctx.stroke();
         return;
       }
 
-      // Stronger contrast accents for readability on bright boards
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(x + 1, y + 1, size - 2, 1.5);
-      ctx.fillRect(x + 1, y + 1, 1.5, size - 2);
-
-      ctx.fillStyle = 'rgba(0,0,0,0.22)';
-      ctx.fillRect(x + 1, y + size - 3, size - 2, 2);
-      ctx.fillRect(x + size - 3, y + 1, 2, size - 2);
-
-      ctx.strokeStyle = 'rgba(65,70,110,0.35)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+      // Dark mode: softer accents
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(rx + 0.5, ry + 0.5, w - 1, 1);
+      ctx.fillRect(rx + 0.5, ry + 0.5, 1, h - 1);
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fillRect(rx + 0.5, ry + h - 2, w - 1, 1.5);
+      ctx.fillRect(rx + w - 2, ry + 0.5, 1.5, h - 1);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(rx, ry, w, h, radius) : null;
+      ctx.stroke();
     },
   },
   arcade: {
     palette: [
       null,
-      '#31d8ff', // I – cyan
-      '#ffd84f', // O – yellow
-      '#b86cff', // T – purple
-      '#54e56c', // S – green
-      '#ff5f93', // Z – pink
-      '#4f74ff', // J – blue
-      '#ff9a42', // L – orange
+      '#2ddeff', // I – cyan (refined)
+      '#ffd650', // O – yellow (balanced)
+      '#b968ff', // T – purple (softened)
+      '#45e060', // S – green (elevated)
+      '#ff6b95', // Z – pink (harmonic)
+      '#5f7eff', // J – blue (adjusted)
+      '#ff9d4d', // L – orange (warmed)
     ],
     drawBlockFn(ctx, col, row, color, size) {
       const x = col * size;
@@ -113,44 +104,42 @@ const SKINS = {
       ctx.fillRect(rx, ry, w, h);
 
       if (boardIsLight) {
-        const topBand = Math.max(2, Math.floor(size * 0.18));
-        ctx.fillStyle = 'rgba(255,255,255,0.34)';
-        ctx.fillRect(rx + 1, ry + 1, w - 2, topBand);
-
-        ctx.fillStyle = 'rgba(0,0,0,0.16)';
-        ctx.fillRect(rx + 1, ry + h - 4, w - 2, 3);
-
-        ctx.strokeStyle = 'rgba(17,17,17,0.28)';
-        ctx.lineWidth = 1;
+        // Minimal bright-field effect
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(rx + 1, ry + 1, w - 2, 1.5);
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.fillRect(rx + 1, ry + h - 2.5, w - 2, 1.5);
+        ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+        ctx.lineWidth = 0.8;
         ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
         return;
       }
 
+      // Dark mode: dynamic gloss without overdraw
       const gloss = ctx.createLinearGradient(x, y, x, y + size);
-      gloss.addColorStop(0, 'rgba(255,255,255,0.35)');
-      gloss.addColorStop(0.45, 'rgba(255,255,255,0.06)');
-      gloss.addColorStop(1, 'rgba(0,0,0,0.32)');
+      gloss.addColorStop(0, 'rgba(255,255,255,0.24)');
+      gloss.addColorStop(0.5, 'rgba(255,255,255,0.04)');
+      gloss.addColorStop(1, 'rgba(0,0,0,0.28)');
       ctx.fillStyle = gloss;
       ctx.fillRect(rx, ry, w, h);
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+      ctx.lineWidth = 0.8;
       ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
-
-      ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.40)';
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
     },
   },
   glass: {
     palette: [
       null,
-      '#3de8ff', // I – cyan
-      '#ffc65a', // O – yellow
-      '#d36bff', // T – purple
-      '#4cff9a', // S – green
-      '#ff6f95', // Z – pink
-      '#6b7dff', // J – blue
-      '#ff8f4a', // L – orange
+      '#3ff5ff', // I – cyan (vibrant)
+      '#ffd560', // O – yellow (golden)
+      '#d960ff', // T – purple (refined)
+      '#50ffaa', // S – green (lifted)
+      '#ff6fa0', // Z – pink (harmonic)
+      '#7080ff', // J – blue (balanced)
+      '#ff9560', // L – orange (warm)
     ],
     drawBlockFn(ctx, col, row, color, size) {
       const x = col * size;
@@ -160,67 +149,69 @@ const SKINS = {
       const w = size - 2;
       const h = size - 2;
       const t = renderClock;
-      const pulse = (Math.sin(t * 4 + col * 0.55 + row * 0.45) + 1) * 0.5;
+      const pulse = (Math.sin(t * 3.5 + col * 0.5 + row * 0.4) + 1) * 0.5;
 
+      // Base diagonal gradient (softer than before)
       const base = ctx.createLinearGradient(x, y, x + size, y + size);
-      base.addColorStop(0, 'rgba(255,255,255,0.20)');
+      base.addColorStop(0, 'rgba(255,255,255,0.16)');
       base.addColorStop(0.35, color);
-      base.addColorStop(1, 'rgba(0,0,0,0.24)');
+      base.addColorStop(1, 'rgba(0,0,0,0.20)');
       ctx.fillStyle = base;
       ctx.fillRect(rx, ry, w, h);
 
       if (boardIsLight) {
-        // Light board: warm glossy face + animated sweep for readability.
+        // Light mode: warm overlay + smooth sweep
         const warm = ctx.createLinearGradient(x, y, x, y + size);
-        warm.addColorStop(0, `rgba(255,248,226,${0.36 + pulse * 0.12})`);
-        warm.addColorStop(0.5, 'rgba(255,214,150,0.16)');
-        warm.addColorStop(1, 'rgba(84,44,0,0.18)');
+        warm.addColorStop(0, `rgba(255,250,235,${0.28 + pulse * 0.08})`);
+        warm.addColorStop(0.5, 'rgba(255,220,170,0.12)');
+        warm.addColorStop(1, 'rgba(100,60,0,0.14)');
         ctx.fillStyle = warm;
         ctx.fillRect(rx, ry, w, h);
 
-        ctx.fillStyle = `rgba(255,255,255,${0.24 + pulse * 0.16})`;
-        ctx.fillRect(rx + 1, ry + 1, w - 2, 2);
-        ctx.fillStyle = 'rgba(66,34,0,0.18)';
-        ctx.fillRect(rx + 1, ry + h - 3, w - 2, 2);
+        ctx.fillStyle = `rgba(255,255,255,${0.18 + pulse * 0.12})`;
+        ctx.fillRect(rx + 1, ry + 1, w - 2, 1.5);
+        ctx.fillStyle = 'rgba(80,40,0,0.14)';
+        ctx.fillRect(rx + 1, ry + h - 2, w - 2, 1.5);
 
-        const sweep = ((t * 56) + (col + row) * 7) % (w + h + 10) - 5;
+        // Smooth sweep (reduced speed for less flashing)
+        const sweep = ((t * 40) + (col + row) * 6) % (w + h + 10) - 5;
         ctx.save();
         ctx.beginPath();
         ctx.rect(rx, ry, w, h);
         ctx.clip();
-        ctx.strokeStyle = `rgba(255,243,214,${0.18 + pulse * 0.14})`;
-        ctx.lineWidth = 4;
+        ctx.strokeStyle = `rgba(255,245,220,${0.14 + pulse * 0.10})`;
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(rx + sweep - h, ry + h);
         ctx.lineTo(rx + sweep, ry);
         ctx.stroke();
         ctx.restore();
 
-        ctx.strokeStyle = 'rgba(17,17,17,0.24)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+        ctx.lineWidth = 0.8;
         ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
         return;
       }
 
-      const glow = 0.12 + pulse * 0.2;
-      const sweep = ((t * 72) + (col - row) * 8) % (w + h + 12) - 6;
+      // Dark mode: cyan glow + diagonal sweep
+      const glow = 0.10 + pulse * 0.15;
+      const sweep = ((t * 50) + (col - row) * 6) % (w + h + 12) - 6;
       ctx.save();
       ctx.beginPath();
       ctx.rect(rx, ry, w, h);
       ctx.clip();
-      ctx.strokeStyle = `rgba(220,244,255,${glow})`;
-      ctx.lineWidth = 4;
+      ctx.strokeStyle = `rgba(200,250,255,${glow})`;
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.moveTo(rx + sweep - h, ry + h);
       ctx.lineTo(rx + sweep, ry);
       ctx.stroke();
       ctx.restore();
 
-      ctx.strokeStyle = `rgba(255,255,255,${0.2 + pulse * 0.18})`;
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = `rgba(255,255,255,${0.16 + pulse * 0.14})`;
+      ctx.lineWidth = 0.8;
       ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
-
-      ctx.strokeStyle = 'rgba(0,0,0,0.40)';
+      ctx.strokeStyle = 'rgba(0,0,0,0.36)';
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
     },
   },

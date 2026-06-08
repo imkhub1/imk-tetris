@@ -47,7 +47,7 @@ Sound is a separate module, `audio.js`, loaded **before** `game.js` in `index.ht
 
 **Anti-spam**: per-sound cooldowns (`throttled`) plus a global `MAX_VOICES` cap. Rapid input (move/rotate/soft-drop) cannot pile up. The ambience uses dedicated long-lived nodes that are **not** voice-counted.
 
-**Ambience**: `startAmbient()` plays a soft lo-fi music bed — a slow `Cmaj7–Am7–Dm7–G7` pad progression (look-ahead scheduler) through a drifting low-pass filter and a slow tremolo, routed `→ ambientBus → master`; `stopAmbient()` fades it out and tears the nodes down. `game.js` starts it when a game begins and on resume, and stops it on pause, game over, and return-to-start.
+**Ambience**: `startAmbient()` plays an instrumental chiptune game groove — a square-wave arpeggio lead over an `Am–F–C–G` progression, a triangle bassline, and a synthesised kick/snare/hi-hat kit, driven by a look-ahead sixteenth-note step sequencer (`AMBIENT_BPM`, `AMBIENT_PROG`, `AMBIENT_ARP`). Lead/bass/drums each get their own sub-gain, all routed `→ ambientBus → master`; `stopAmbient()` halts scheduling, fades out, and tears the nodes down. `game.js` starts it when a game begins and on resume, and stops it on pause, game over, and return-to-start.
 
 **Persistence** (localStorage): `imktetris.audio.volume` (0–1) and `imktetris.audio.muted` (`'1'`/`'0'`).
 

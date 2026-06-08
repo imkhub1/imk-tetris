@@ -249,19 +249,25 @@ const Sfx = (function () {
     fn(arg);
   }
 
-  // ── Ambient bed (soft lo-fi) ────────────────────────────────
-  // A gentle lo-fi music bed: a slow Imaj7–vi7–ii7–V7 pad progression run
-  // through a moving low-pass filter and a slow tremolo "wow". Chords are
-  // scheduled ahead with a look-ahead timer so they flow seamlessly and loop.
-  // All nodes route through ambientBus -> master, so mute/volume apply. Not
+  // ── Ambient bed (chiptune game groove) ──────────────────────
+  // A driving, instrumental chiptune loop: a square-wave arpeggio lead over an
+  // i–VI–III–VII progression (Am–F–C–G), a triangle bassline, and a simple
+  // kick / snare / hi-hat drum kit (all synthesised). A look-ahead step
+  // sequencer schedules sixteenth notes so the groove loops seamlessly.
+  // Everything routes through ambientBus -> master, so mute/volume apply. Not
   // voice-counted, so the bed never starves gameplay SFX.
-  const AMBIENT_CHORDS = [
-    [130.81, 164.81, 196.00, 246.94], // Cmaj7
-    [110.00, 130.81, 164.81, 196.00], // Am7
-    [146.83, 174.61, 220.00, 261.63], // Dm7
-    [ 98.00, 123.47, 146.83, 174.61], // G7
+  const AMBIENT_BPM = 128;
+  const AMBIENT_STEP = (60 / AMBIENT_BPM) / 4; // one sixteenth note, seconds
+  const AMBIENT_STEPS_PER_BAR = 16;
+  // Each chord: bass root + the four arpeggio notes (root, 3rd, 5th, octave).
+  const AMBIENT_PROG = [
+    { root: 110.00, arp: [220.00, 261.63, 329.63, 440.00] }, // Am
+    { root:  87.31, arp: [174.61, 220.00, 261.63, 349.23] }, // F
+    { root: 130.81, arp: [261.63, 329.63, 392.00, 523.25] }, // C
+    { root:  98.00, arp: [196.00, 246.94, 293.66, 392.00] }, // G
   ];
-  const AMBIENT_CHORD_DUR = 3.8; // seconds each chord is held
+  // Bouncing arpeggio figure indexed into the chord's four notes (loops by mod).
+  const AMBIENT_ARP = [0, 1, 2, 3, 2, 3, 1, 2];
 
   function startAmbient() {
     const c = ensureCtx();
@@ -273,82 +279,131 @@ const Sfx = (function () {
 
     const out = c.createGain();
     out.gain.setValueAtTime(0.0001, now);
-    out.gain.linearRampToValueAtTime(1, now + 2.0); // gentle fade-in
+    out.gain.linearRampToValueAtTime(1, now + 0.8); // quick fade-in
     out.connect(ambientBus);
 
-    // Slow tremolo for a tape-ish lo-fi wobble.
-    const tremolo = c.createGain();
-    tremolo.gain.value = 0.9;
-    tremolo.connect(out);
-    const tremLfo = c.createOscillator();
-    const tremDepth = c.createGain();
-    tremLfo.type = 'sine';
-    tremLfo.frequency.value = 1.7;
-    tremDepth.gain.value = 0.1;
-    tremLfo.connect(tremDepth);
-    tremDepth.connect(tremolo.gain);
+    // Sub-mixes so the lead, bass and drums sit at fixed relative levels.
+    const lead = c.createGain();
+    lead.gain.value = 0.13;
+    const leadLp = c.createBiquadFilter();
+    leadLp.type = 'lowpass';
+    leadLp.frequency.value = 2800;
+    leadLp.Q.value = 0.6;
+    lead.connect(leadLp);
+    leadLp.connect(out);
 
-    // Warm low-pass that drifts, so the pad never sounds static.
-    const filter = c.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.value = 720;
-    filter.Q.value = 0.8;
-    filter.connect(tremolo);
-    const filtLfo = c.createOscillator();
-    const filtDepth = c.createGain();
-    filtLfo.type = 'sine';
-    filtLfo.frequency.value = 0.06;
-    filtDepth.gain.value = 240;
-    filtLfo.connect(filtDepth);
-    filtDepth.connect(filter.frequency);
+    const bass = c.createGain();
+    bass.gain.value = 0.20;
+    bass.connect(out);
 
-    tremLfo.start(now);
-    filtLfo.start(now);
+    const drums = c.createGain();
+    drums.gain.value = 0.5;
+    drums.connect(out);
 
-    const liveVoices = new Set();
-    let idx = 0;
+    // One short noise buffer reused by the snare / hi-hat.
+    const noiseBuf = c.createBuffer(1, Math.floor(c.sampleRate * 0.3), c.sampleRate);
+    const nd = noiseBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
 
-    function playChord(at) {
-      const chord = AMBIENT_CHORDS[idx % AMBIENT_CHORDS.length];
-      idx++;
-      chord.forEach((f, i) => {
-        const o = c.createOscillator();
-        const g = c.createGain();
-        o.type = i === 0 ? 'triangle' : 'sine';
-        o.frequency.value = f;
-        o.detune.value = (i - 1.5) * 4; // subtle spread for warmth
-        const peak = i === 0 ? 0.06 : 0.042;
-        g.gain.setValueAtTime(0.0001, at);
-        g.gain.linearRampToValueAtTime(peak, at + 1.2);                   // slow swell
-        g.gain.setValueAtTime(peak, at + AMBIENT_CHORD_DUR - 1.0);
-        g.gain.exponentialRampToValueAtTime(0.0001, at + AMBIENT_CHORD_DUR + 0.7); // overlap tail
-        o.connect(g);
-        g.connect(filter);
-        o.start(at);
-        o.stop(at + AMBIENT_CHORD_DUR + 0.9);
-        liveVoices.add(o);
-        o.onended = () => liveVoices.delete(o);
-      });
+    function blip(at, freq, dur, peak, type, dest) {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, at);
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(peak, at + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(g);
+      g.connect(dest);
+      o.start(at);
+      o.stop(at + dur + 0.02);
     }
 
-    // Look-ahead scheduler: keep ~1s of chords queued so playback is seamless.
-    let nextTime = now + 0.15;
+    function kick(at) {
+      const o = c.createOscillator();
+      const g = c.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(125, at);
+      o.frequency.exponentialRampToValueAtTime(45, at + 0.12);
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(0.9, at + 0.006);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
+      o.connect(g);
+      g.connect(drums);
+      o.start(at);
+      o.stop(at + 0.2);
+    }
+
+    function snare(at) {
+      const s = c.createBufferSource();
+      s.buffer = noiseBuf;
+      const bp = c.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 1900;
+      bp.Q.value = 0.7;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(0.45, at + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
+      s.connect(bp);
+      bp.connect(g);
+      g.connect(drums);
+      s.start(at);
+      s.stop(at + 0.18);
+    }
+
+    function hat(at) {
+      const s = c.createBufferSource();
+      s.buffer = noiseBuf;
+      const hp = c.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 7500;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0.18, at);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.04);
+      s.connect(hp);
+      hp.connect(g);
+      g.connect(drums);
+      s.start(at);
+      s.stop(at + 0.06);
+    }
+
+    function scheduleStep(at, s) {
+      const bar = Math.floor(s / AMBIENT_STEPS_PER_BAR) % AMBIENT_PROG.length;
+      const inBar = s % AMBIENT_STEPS_PER_BAR;
+      const chord = AMBIENT_PROG[bar];
+      // Arpeggio lead on every sixteenth.
+      blip(at, chord.arp[AMBIENT_ARP[s % AMBIENT_ARP.length]], AMBIENT_STEP * 0.9, 0.9, 'square', lead);
+      // Bassline on every beat.
+      if (inBar % 4 === 0) blip(at, chord.root, AMBIENT_STEP * 3.4, 0.9, 'triangle', bass);
+      // Drum kit.
+      if (inBar === 0 || inBar === 8) kick(at);
+      if (inBar === 4 || inBar === 12) snare(at);
+      if (inBar % 2 === 1) hat(at);
+    }
+
+    let stopped = false;
+    let step = 0;
+    let nextTime = now + 0.12;
     function scheduler() {
-      while (nextTime < c.currentTime + 1.0) {
-        playChord(nextTime);
-        nextTime += AMBIENT_CHORD_DUR;
+      if (stopped) return;
+      while (nextTime < c.currentTime + 0.2) {
+        scheduleStep(nextTime, step);
+        step++;
+        nextTime += AMBIENT_STEP;
       }
     }
     scheduler();
-    const timer = setInterval(scheduler, 500);
+    const timer = setInterval(scheduler, 60);
 
-    ambient = { out, tremLfo, filtLfo, timer, liveVoices };
+    ambient = { out, timer, stop: () => { stopped = true; } };
   }
 
   function stopAmbient() {
     if (!ambient) return;
     const old = ambient;
     ambient = null; // release the slot immediately so a restart is safe
+    if (old.stop) old.stop();
     clearInterval(old.timer);
     const c = ctx;
     if (!c) return;
@@ -356,15 +411,11 @@ const Sfx = (function () {
     try {
       old.out.gain.cancelScheduledValues(now);
       old.out.gain.setValueAtTime(old.out.gain.value, now);
-      old.out.gain.linearRampToValueAtTime(0.0001, now + 0.7); // fade out
+      old.out.gain.linearRampToValueAtTime(0.0001, now + 0.4); // fade out
     } catch (_) {}
-    const stopAt = now + 0.8;
-    old.liveVoices.forEach(o => { try { o.stop(stopAt); } catch (_) {} });
-    try { old.tremLfo.stop(stopAt); } catch (_) {}
-    try { old.filtLfo.stop(stopAt); } catch (_) {}
     setTimeout(() => {
       try { old.out.disconnect(); } catch (_) {}
-    }, 1100);
+    }, 700);
   }
 
   function setVolume(v) {

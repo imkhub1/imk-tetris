@@ -1313,9 +1313,6 @@ const UI_SFX_SELECTOR =
 document.addEventListener('click', (e) => {
   if (e.target.closest(UI_SFX_SELECTOR)) Sfx.play('uiclick');
 }, true);
-document.addEventListener('mouseover', (e) => {
-  if (e.target.closest(UI_SFX_SELECTOR)) Sfx.play('uihover');
-});
 
 // ── Keyboard controls ─────────────────────────────────────────
 document.addEventListener('keydown', (e) => {

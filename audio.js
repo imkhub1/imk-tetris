@@ -211,10 +211,6 @@ const Sfx = (function () {
     uiclick() {
       tone({ freq: 420, type: 'sine', dur: 0.045, gain: 0.16, bus: uiBus });
     },
-    uihover() {
-      if (!throttled('uihover', 70)) return;
-      tone({ freq: 620, type: 'sine', dur: 0.03, gain: 0.05, bus: uiBus });
-    },
   };
 
   // ── Public API ──────────────────────────────────────────────

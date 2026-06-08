@@ -49,9 +49,9 @@ Sound is a separate module, `audio.js`, loaded **before** `game.js` in `index.ht
 
 **Persistence** (localStorage): `imktetris.audio.volume` (0–1) and `imktetris.audio.muted` (`'1'`/`'0'`).
 
-**API**: `Sfx.play(name, arg)`, `Sfx.setVolume(v)`, `Sfx.getVolume()`, `Sfx.toggleMute()`, `Sfx.setMuted(m)`, `Sfx.isMuted()`, `Sfx.unlock()`. Sound names: `move`, `rotate`, `softdrop`, `harddrop`, `lock`, `lineclear(n)`, `levelup`, `pause`, `resume`, `gameover`, `uiclick`, `uihover`.
+**API**: `Sfx.play(name, arg)`, `Sfx.setVolume(v)`, `Sfx.getVolume()`, `Sfx.toggleMute()`, `Sfx.setMuted(m)`, `Sfx.isMuted()`, `Sfx.unlock()`. Sound names: `move`, `rotate`, `softdrop`, `harddrop`, `lock`, `lineclear(n)`, `levelup`, `pause`, `resume`, `gameover`, `uiclick`.
 
-`game.js` calls `Sfx.play(...)` at the matching game events and wires the `#sound-toggle` (mute) and `#volume-slider` controls in the right panel. Interface buttons get `uiclick`/`uihover` via one delegated listener. To add a new sound, add an entry to the `sounds` map in `audio.js` and call `Sfx.play('name')` at the event site.
+`game.js` calls `Sfx.play(...)` at the matching game events and wires the `#sound-toggle` (mute) and `#volume-slider` controls in the right panel. Interface buttons get `uiclick` via one delegated listener. To add a new sound, add an entry to the `sounds` map in `audio.js` and call `Sfx.play('name')` at the event site.
 
 ## Adjusting constants
 

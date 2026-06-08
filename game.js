@@ -305,6 +305,7 @@ let gameOver;
 let animId;       // requestAnimationFrame handle
 let waitingForName; // true when game-over name-entry is pending
 let newRecordIdx;   // index in highscores where new entry was inserted
+let hardDropMouseDown;
 
 // Starting level for next game (persists across games in session)
 let startLevel = 1;
@@ -433,6 +434,7 @@ function init() {
   gameOver    = false;
   waitingForName = false;
   newRecordIdx = -1;
+  hardDropMouseDown = false;
 
   // Load saved skin preference
   try {
@@ -891,19 +893,22 @@ document.addEventListener('keydown', (e) => {
 
   switch (e.code) {
     case 'ArrowLeft':
+    case 'KeyA':
       e.preventDefault();
       if (!paused) moveLeft();
       break;
     case 'ArrowRight':
+    case 'KeyD':
       e.preventDefault();
       if (!paused) moveRight();
       break;
     case 'ArrowUp':
-    case 'KeyX':
+    case 'KeyW':
       e.preventDefault();
       if (!paused) tryRotate();
       break;
     case 'ArrowDown':
+    case 'KeyS':
       e.preventDefault();
       if (!paused) softDrop();
       break;
@@ -913,9 +918,44 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'KeyP':
     case 'Escape':
+    case 'Enter':
       e.preventDefault();
       togglePause();
       break;
+  }
+});
+
+boardCanvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+});
+
+boardCanvas.addEventListener('mousedown', (e) => {
+  if (!startScreen.classList.contains('hidden') || gameOver) return;
+
+  if (e.button === 0) {
+    e.preventDefault();
+    if (!paused && !hardDropMouseDown) {
+      hardDropMouseDown = true;
+      hardDrop();
+    }
+    return;
+  }
+
+  if (e.button === 2) {
+    e.preventDefault();
+    if (!paused) tryRotate();
+    return;
+  }
+
+  if (e.button === 1) {
+    e.preventDefault();
+    togglePause();
+  }
+});
+
+window.addEventListener('mouseup', (e) => {
+  if (e.button === 0) {
+    hardDropMouseDown = false;
   }
 });
 

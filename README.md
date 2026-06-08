@@ -16,7 +16,7 @@ Implementación del clásico **Tetris** en JavaScript vanilla, usando HTML5 Canv
 - **Soft drop** (bajada acelerada) y **Hard drop** (caída instantánea).
 - **Pieza fantasma** (*ghost piece*): muestra dónde aterrizará la pieza.
 - **Vista previa** de la siguiente pieza.
-- **Selector de skins** para bloques (**Pastel**, **Arcade** y **Aurora**).
+- **Selector de skins** para bloques (**Pastel**, **Arcade** y **Glass**).
 - **Sistema de puntuación** clásico (100 / 300 / 500 / 800 × nivel).
 - **Niveles** que suben cada 10 líneas y aceleran la caída.
 - **Pausa** y **Game Over** con opción de reinicio.

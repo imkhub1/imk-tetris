@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>imk Tetris</title>
     <link rel="stylesheet" href="style.css" />
+    <script>
+      // Apply saved hub theme before first paint to avoid a flash of dark.
+      try {
+        if (localStorage.getItem('imktetris.theme') === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <!-- Start Screen -->
@@ -34,7 +42,10 @@
         </table>
       </div>
       <p class="press-enter">PRESS ENTER TO PLAY</p>
-      <button class="reset-btn" id="start-reset-btn">Reset Records</button>
+      <div class="start-controls">
+        <button class="reset-btn" id="start-reset-btn">Reset Records</button>
+        <button id="start-theme-toggle" class="start-theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
+      </div>
     </div>
 
     <div class="container">
@@ -157,7 +168,7 @@
           <div class="skin-btns">
             <button class="skin-btn active" data-skin="pastel">Pastel</button>
             <button class="skin-btn" data-skin="arcade">Arcade</button>
-            <button class="skin-btn" data-skin="aurora">Aurora</button>
+            <button class="skin-btn" data-skin="glass">Glass</button>
           </div>
         </div>
 

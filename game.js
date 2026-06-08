@@ -849,20 +849,30 @@ function loop(timestamp) {
 }
 
 // ── Theme ──────────────────────────────────────────────────────
+function updateThemeToggleButton() {
+  const isLight = boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
+  const label = isLight ? 'Switch to dark mode' : 'Switch to light mode';
+  themeToggle.textContent = '';
+  themeToggle.setAttribute('aria-label', label);
+  themeToggle.setAttribute('title', label);
+  themeToggle.setAttribute('aria-pressed', String(isLight));
+  themeToggle.setAttribute('data-mode', isLight ? 'light' : 'dark');
+}
+
 function toggleTheme() {
   const isLight = boardWrapper && boardWrapper.getAttribute('data-theme') === 'light';
   if (isLight) {
     boardWrapper.removeAttribute('data-theme');
-    themeToggle.textContent = '☀ LIGHT';
   } else {
     if (boardWrapper) {
       boardWrapper.setAttribute('data-theme', 'light');
     }
-    themeToggle.textContent = '◑ DARK';
   }
+  updateThemeToggleButton();
   if (current) draw();
 }
 
+updateThemeToggleButton();
 themeToggle.addEventListener('click', toggleTheme);
 
 // ── Skin selector ─────────────────────────────────────────────

@@ -87,14 +87,7 @@
       </aside>
 
       <!-- Main board -->
-      <div class="board-stage">
-        <div class="board-toggles" role="group" aria-label="Game toggles">
-          <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
-          <button id="sound-toggle" class="theme-btn theme-toggle-btn sound-toggle-btn" data-mode="on" aria-label="Mute sound" title="Mute sound"></button>
-          <button id="freeze-toggle" class="theme-btn theme-toggle-btn freeze-toggle-btn" data-mode="off" aria-label="Freeze game for testing" title="Freeze game for testing"></button>
-        </div>
-
-        <main class="board-wrapper">
+      <main class="board-wrapper">
         <canvas id="board" width="300" height="600" role="img" aria-label="Tetris game board"></canvas>
 
         <!-- Countdown before play begins -->
@@ -197,7 +190,6 @@
           </div>
         </div>
       </main>
-      </div>
 
       <!-- Right panel: next piece + controls -->
       <aside class="panel panel-right">
@@ -211,6 +203,14 @@
             <button class="skin-btn active" data-skin="pastel" aria-pressed="true">Pastel</button>
             <button class="skin-btn" data-skin="arcade" aria-pressed="false">Arcade</button>
             <button class="skin-btn" data-skin="glass" aria-pressed="false">Glass</button>
+          </div>
+        </div>
+
+        <div class="module toggle-module">
+          <div class="board-toggles" role="group" aria-label="Game toggles">
+            <button id="theme-toggle" class="theme-btn theme-toggle-btn" data-mode="dark" aria-label="Switch to light mode" title="Switch to light mode"></button>
+            <button id="sound-toggle" class="theme-btn theme-toggle-btn sound-toggle-btn" data-mode="on" aria-label="Mute sound" title="Mute sound"></button>
+            <button id="freeze-toggle" class="theme-btn theme-toggle-btn freeze-toggle-btn" data-mode="off" aria-label="Freeze game for testing" title="Freeze game for testing"></button>
           </div>
         </div>
       </aside>

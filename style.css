@@ -139,22 +139,16 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 760px;
+  width: 680px;
   min-height: 600px;
 }
 
-/* Board + side toggle column travel together, centered on the page. */
-.board-stage {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
+/* Vertical game-toggle column (theme / sound / freeze) in the right panel. */
 .board-toggles {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  align-self: center;
+  align-items: center;
 }
 
 /* ---------- Panels ---------- */
@@ -406,10 +400,9 @@ body::before {
 /* ---------- Board-theme toggle module ---------- */
 .toggle-module {
   position: static;
-  flex-direction: row;
-  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   gap: 10px;
   align-self: stretch;
   margin-top: 0;

@@ -41,17 +41,21 @@ Single-file game logic in `game.js` (~460 lines, vanilla JS + Canvas 2D API). No
 
 Sound is a separate module, `audio.js`, loaded **before** `game.js` in `index.html`. It exposes one global, `Sfx`, and has no dependencies or asset files — every sound is generated on the fly with the Web Audio API (oscillators + filtered noise).
 
-**Gain staging**: `voice → gameplayBus (1.0) / uiBus (0.5) → master → destination`. UI SFX route through `uiBus` so they always sit quieter than gameplay SFX. The persisted master volume and mute live on `master`.
+**Gain staging**: `voice → gameplayBus (1.0) / uiBus (0.5) → master → destination`, plus an `ambientBus (0.34) → master` for background ambience. UI SFX route through `uiBus` so they always sit quieter than gameplay SFX. The persisted master volume and mute live on `master`, so they also govern the ambience.
 
-**Browser-safe init**: the `AudioContext` is created lazily and resumed on the first trusted user gesture (`pointerdown`/`keydown`/`touchstart`), so there are no autoplay-policy errors.
+**Browser-safe init**: the `AudioContext` is created lazily and resumed on the first trusted user gesture (`pointerdown`/`keydown`/`touchstart`), so there are no autoplay-policy errors. `play()` also defers a voice via `ctx.resume().then(...)` when the context isn't running yet, so the first gesture's sound isn't dropped.
 
-**Anti-spam**: per-sound cooldowns (`throttled`) plus a global `MAX_VOICES` cap. Rapid input (move/rotate/soft-drop) cannot pile up.
+**Anti-spam**: per-sound cooldowns (`throttled`) plus a global `MAX_VOICES` cap. Rapid input (move/rotate/soft-drop) cannot pile up. The ambience uses dedicated long-lived nodes that are **not** voice-counted.
+
+**Ambience**: `startAmbient()` plays an instrumental chiptune game groove — a square-wave arpeggio lead over an `Am–F–C–G` progression, a triangle bassline, and a synthesised kick/snare/hi-hat kit, driven by a look-ahead sixteenth-note step sequencer (`AMBIENT_BPM`, `AMBIENT_PROG`, `AMBIENT_ARP`). Lead/bass/drums each get their own sub-gain, all routed `→ ambientBus → master`; `stopAmbient()` halts scheduling, fades out, and tears the nodes down. `game.js` starts it when a game begins and on resume, and stops it on pause, game over, and return-to-start.
 
 **Persistence** (localStorage): `imktetris.audio.volume` (0–1) and `imktetris.audio.muted` (`'1'`/`'0'`).
 
-**API**: `Sfx.play(name, arg)`, `Sfx.setVolume(v)`, `Sfx.getVolume()`, `Sfx.toggleMute()`, `Sfx.setMuted(m)`, `Sfx.isMuted()`, `Sfx.unlock()`. Sound names: `move`, `rotate`, `softdrop`, `harddrop`, `lock`, `lineclear(n)`, `levelup`, `pause`, `resume`, `gameover`, `uiclick`.
+**API**: `Sfx.play(name, arg)`, `Sfx.setVolume(v)`, `Sfx.getVolume()`, `Sfx.toggleMute()`, `Sfx.setMuted(m)`, `Sfx.isMuted()`, `Sfx.unlock()`, `Sfx.startAmbient()`, `Sfx.stopAmbient()`, `Sfx.isAmbientOn()`. Sound names: `move`, `rotate`, `softdrop`, `harddrop`, `lock`, `lineclear(n)`, `levelup`, `pause`, `resume`, `gameover`, `uiclick`, `gamestart`, `countbeep(go)`.
 
-`game.js` calls `Sfx.play(...)` at the matching game events and wires the `#sound-toggle` (mute) and `#volume-slider` controls in the right panel. Interface buttons get `uiclick` via one delegated listener. To add a new sound, add an entry to the `sounds` map in `audio.js` and call `Sfx.play('name')` at the event site.
+`game.js` calls `Sfx.play(...)` at the matching game events and wires the `#sound-toggle` / `#start-sound-toggle` (mute, kept in sync) and the `#volume-slider` (now inside the pause menu). The light/dark, sound, and freeze toggles sit in a vertical `.board-toggles` column glued to the right edge of the board (inside `.board-stage`). Interface buttons get `uiclick` via one delegated listener. To add a new sound, add an entry to the `sounds` map in `audio.js` and call `Sfx.play('name')` at the event site.
+
+**Pre-game countdown**: `init()` sets `counting = true` and shows `#countdown`; the game loop renders a 3→2→1 overlay (CSS `countdown-pop` animation, `countbeep` per number) and blocks gravity/input until it finishes, then resets `accumulated` so gravity starts fresh.
 
 ## Adjusting constants
 

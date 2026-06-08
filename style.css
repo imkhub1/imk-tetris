@@ -143,6 +143,14 @@ body::before {
   min-height: 600px;
 }
 
+/* Vertical game-toggle column (theme / sound / freeze) in right panel, below skins. */
+.board-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: flex-start;
+}
+
 /* ---------- Panels ---------- */
 .panel {
   position: absolute;
@@ -392,10 +400,9 @@ body::before {
 /* ---------- Board-theme toggle module ---------- */
 .toggle-module {
   position: static;
-  flex-direction: row;
-  flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   gap: 10px;
   align-self: stretch;
   margin-top: 0;
@@ -907,16 +914,17 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
   justify-content: center;
   align-items: center;
   gap: 18px;
-  padding: 16px;
+  padding: 22px 20px;
   z-index: 20;
+  overflow-y: auto;
   animation: fade-in 0.24s ease;
 }
 
 .pause-menu-title {
   font-family: var(--font-ui);
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--board-overlay-title);
   text-align: center;
@@ -933,6 +941,19 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
   width: 100%;
   padding: 11px;
   font-size: 0.66rem;
+}
+
+.pause-volume {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  align-items: center;
+  width: 84%;
+}
+
+.pause-volume .volume-control {
+  width: 100%;
+  flex: none;
 }
 
 /* Board-scoped colors so pause UI reads in light board theme */
@@ -977,7 +998,7 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
   grid-template-columns: 1fr auto;
   align-items: center;
   gap: 12px;
-  padding: 7px 0;
+  padding: 6px 0;
   border-bottom: 1px solid var(--board-overlay-border);
 }
 
@@ -1016,7 +1037,7 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
 .pause-level-select {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   align-items: center;
   width: 84%;
 }
@@ -1379,6 +1400,36 @@ html[data-theme="light"] .theme-toggle-btn[data-mode="light"] {
 
 .volume-slider:focus-visible {
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent-line);
+}
+
+/* ---------- Pre-game countdown ---------- */
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25;
+  pointer-events: none;
+  background: var(--board-overlay-bg);
+  backdrop-filter: blur(2px);
+}
+
+.countdown-number {
+  font-family: var(--font-mono);
+  font-size: 8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 26px var(--accent-soft), 0 6px 30px rgba(0, 0, 0, 0.5);
+  animation: countdown-pop 0.92s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes countdown-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  18%  { transform: scale(1.08); opacity: 1; }
+  42%  { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.84); opacity: 0; }
 }
 
 /* ---------- Responsive (modest down-scale) ---------- */

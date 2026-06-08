@@ -90,6 +90,140 @@ const SKINS = {
       ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
     },
   },
+  arcade: {
+    palette: [
+      null,
+      '#31d8ff', // I – cyan
+      '#ffd84f', // O – yellow
+      '#b86cff', // T – purple
+      '#54e56c', // S – green
+      '#ff5f93', // Z – pink
+      '#4f74ff', // J – blue
+      '#ff9a42', // L – orange
+    ],
+    drawBlockFn(ctx, col, row, color, size) {
+      const x = col * size;
+      const y = row * size;
+      const rx = x + 1;
+      const ry = y + 1;
+      const w = size - 2;
+      const h = size - 2;
+
+      ctx.fillStyle = color;
+      ctx.fillRect(rx, ry, w, h);
+
+      if (boardIsLight) {
+        const topBand = Math.max(2, Math.floor(size * 0.18));
+        ctx.fillStyle = 'rgba(255,255,255,0.34)';
+        ctx.fillRect(rx + 1, ry + 1, w - 2, topBand);
+
+        ctx.fillStyle = 'rgba(0,0,0,0.16)';
+        ctx.fillRect(rx + 1, ry + h - 4, w - 2, 3);
+
+        ctx.strokeStyle = 'rgba(17,17,17,0.28)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+        return;
+      }
+
+      const gloss = ctx.createLinearGradient(x, y, x, y + size);
+      gloss.addColorStop(0, 'rgba(255,255,255,0.35)');
+      gloss.addColorStop(0.45, 'rgba(255,255,255,0.06)');
+      gloss.addColorStop(1, 'rgba(0,0,0,0.32)');
+      ctx.fillStyle = gloss;
+      ctx.fillRect(rx, ry, w, h);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+      ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+    },
+  },
+  aurora: {
+    palette: [
+      null,
+      '#3de8ff', // I – cyan
+      '#ffc65a', // O – yellow
+      '#d36bff', // T – purple
+      '#4cff9a', // S – green
+      '#ff6f95', // Z – pink
+      '#6b7dff', // J – blue
+      '#ff8f4a', // L – orange
+    ],
+    drawBlockFn(ctx, col, row, color, size) {
+      const x = col * size;
+      const y = row * size;
+      const rx = x + 1;
+      const ry = y + 1;
+      const w = size - 2;
+      const h = size - 2;
+      const t = renderClock || performance.now() * 0.001;
+      const pulse = (Math.sin(t * 4 + col * 0.55 + row * 0.45) + 1) * 0.5;
+
+      const base = ctx.createLinearGradient(x, y, x + size, y + size);
+      base.addColorStop(0, 'rgba(255,255,255,0.20)');
+      base.addColorStop(0.35, color);
+      base.addColorStop(1, 'rgba(0,0,0,0.24)');
+      ctx.fillStyle = base;
+      ctx.fillRect(rx, ry, w, h);
+
+      if (boardIsLight) {
+        // Light board: warm glossy face + animated sweep for readability.
+        const warm = ctx.createLinearGradient(x, y, x, y + size);
+        warm.addColorStop(0, `rgba(255,248,226,${0.36 + pulse * 0.12})`);
+        warm.addColorStop(0.5, 'rgba(255,214,150,0.16)');
+        warm.addColorStop(1, 'rgba(84,44,0,0.18)');
+        ctx.fillStyle = warm;
+        ctx.fillRect(rx, ry, w, h);
+
+        ctx.fillStyle = `rgba(255,255,255,${0.24 + pulse * 0.16})`;
+        ctx.fillRect(rx + 1, ry + 1, w - 2, 2);
+        ctx.fillStyle = 'rgba(66,34,0,0.18)';
+        ctx.fillRect(rx + 1, ry + h - 3, w - 2, 2);
+
+        const sweep = ((t * 56) + (col + row) * 7) % (w + h + 10) - 5;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(rx, ry, w, h);
+        ctx.clip();
+        ctx.strokeStyle = `rgba(255,243,214,${0.18 + pulse * 0.14})`;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(rx + sweep - h, ry + h);
+        ctx.lineTo(rx + sweep, ry);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(17,17,17,0.24)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+        return;
+      }
+
+      const glow = 0.12 + pulse * 0.2;
+      const sweep = ((t * 72) + (col - row) * 8) % (w + h + 12) - 6;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rx, ry, w, h);
+      ctx.clip();
+      ctx.strokeStyle = `rgba(220,244,255,${glow})`;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(rx + sweep - h, ry + h);
+      ctx.lineTo(rx + sweep, ry);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.strokeStyle = `rgba(255,255,255,${0.2 + pulse * 0.18})`;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 1.5, y + 1.5, size - 3, size - 3);
+
+      ctx.strokeStyle = 'rgba(0,0,0,0.40)';
+      ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+    },
+  },
 };
 
 // Piece colors by index (0 = empty) – kept for legacy reference; use getPalette() in rendering
@@ -111,6 +245,7 @@ let activeSkin = 'pastel';
 // querying the DOM per block. The next-piece preview always lives on the dark
 // right panel, so it forces this to false.
 let boardIsLight = false;
+let renderClock = 0;
 
 function getPalette() {
   return SKINS[activeSkin].palette;
@@ -547,6 +682,7 @@ function getGhostY() {
 // ── Rendering ─────────────────────────────────────────────────
 function draw() {
   boardIsLight = isBoardLightTheme();
+  renderClock = performance.now() * 0.001;
   boardCtx.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
 
   if (boardIsLight) drawGrid();
@@ -643,6 +779,7 @@ function matrixNeighbors(matrix, r, c) {
 function drawNextPiece() {
   // Preview sits on the dark right panel regardless of board theme.
   boardIsLight = false;
+  renderClock = performance.now() * 0.001;
   nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
 
   const palette = getPalette();

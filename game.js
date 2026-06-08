@@ -676,8 +676,7 @@ function calcDropInterval(lvl) {
 }
 
 function isBoardLightTheme() {
-  // Board is always dark now; the light/dark toggle themes the hub, not the board.
-  return false;
+  return document.documentElement.getAttribute('data-theme') === 'light';
 }
 
 // ── Ghost piece ───────────────────────────────────────────────

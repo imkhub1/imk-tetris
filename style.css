@@ -47,9 +47,18 @@
   --radius-btn:  8px;
 
   /* ---- Board-scoped tokens (dark defaults; light overrides below) ---- */
-  --board-surface:       #0d0f14;
-  --board-border:        #2b303b;
-  --board-canvas-grid:   rgba(255, 255, 255, 0.045);
+  --board-frame-surface:      var(--surface);
+  --board-frame-surface-2:    var(--surface-2);
+  --board-frame-border:       var(--border);
+  --board-frame-shadow:       0 24px 60px rgba(0, 0, 0, 0.34);
+  --board-frame-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+                              inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --board-frame-sheen:        rgba(255, 255, 255, 0.08);
+  --board-frame-divider:      rgba(255, 255, 255, 0.06);
+  --board-frame-ambient:      var(--accent-soft);
+  --board-surface:            var(--bg);
+  --board-border:             var(--border-strong);
+  --board-canvas-grid:        rgba(255, 255, 255, 0.045);
 
   --board-overlay-bg:           rgba(9, 10, 14, 0.78);
   --board-overlay-card-bg:      rgba(20, 23, 30, 0.96);
@@ -211,50 +220,68 @@ body::before {
 .info-block:first-child .value { color: var(--accent); }
 
 /* ---------- Board wrapper ---------- */
-/* The board is ALWAYS dark. Re-declare the full token contract here so the
-   board and its children (overlay, pause menu, name entry) never inherit the
-   hub's light theme tokens set on <html data-theme="light">. */
 .board-wrapper {
-  --bg:            #0b0c10;
-  --surface:       #14161c;
-  --surface-2:     #1a1d25;
-  --border:        #242832;
-  --border-strong: #333845;
-  --text:          #f2f3f5;
-  --text-dim:      #a7afbd;
-  --text-faint:    #8a92a3;
-  --accent:        #bef264;
-  --accent-strong: #d3ff7e;
-  --accent-soft:   rgba(190, 242, 100, 0.14);
-  --accent-line:   rgba(190, 242, 100, 0.55);
-
-  --board-surface:       #0d0f14;
-  --board-border:        #2b303b;
-  --board-canvas-grid:   rgba(255, 255, 255, 0.045);
-  --board-overlay-bg:           rgba(9, 10, 14, 0.78);
-  --board-overlay-card-bg:      rgba(20, 23, 30, 0.96);
-  --board-overlay-card-shadow:  0 24px 60px rgba(0, 0, 0, 0.55),
-                                inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  --board-overlay-border:       #2d323d;
-  --board-overlay-title:        var(--text);
-  --board-overlay-heading:      var(--accent);
-  --board-overlay-text:         var(--text);
-  --board-overlay-muted:        var(--text-dim);
-
   position: relative;
   align-self: center;
-  border: 1px solid var(--board-border);
-  border-radius: var(--radius-card);
-  background: var(--board-surface);
-  box-shadow:
-    0 24px 60px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.015);
+  isolation: isolate;
+  padding: 10px;
+  border: 1px solid var(--board-frame-border);
+  border-radius: calc(var(--radius-card) + 6px);
+  background: linear-gradient(180deg, var(--board-frame-surface), var(--board-frame-surface-2));
+  box-shadow: var(--board-frame-shadow), var(--board-frame-inner-shadow);
   overflow: hidden;
 }
 
+.board-wrapper::before,
+.board-wrapper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.board-wrapper::before {
+  z-index: 0;
+  background:
+    linear-gradient(180deg, var(--board-frame-sheen), transparent 22%),
+    linear-gradient(90deg, transparent 0%, var(--board-frame-divider) 50%, transparent 100%);
+  opacity: 0.9;
+}
+
+.board-wrapper::after {
+  inset: auto;
+  top: 12%;
+  left: 16%;
+  width: 68%;
+  height: 42%;
+  z-index: 0;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 50%, var(--board-frame-ambient), transparent 72%);
+  opacity: 0.75;
+  transform: translate3d(0, 0, 0);
+  animation: board-wrapper-drift 18s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+@keyframes board-wrapper-drift {
+  0%, 100% {
+    transform: translate3d(-2%, 0, 0) scale(0.98);
+    opacity: 0.58;
+  }
+  50% {
+    transform: translate3d(2%, 2%, 0) scale(1.03);
+    opacity: 0.86;
+  }
+}
+
 #board {
+  position: relative;
+  z-index: 1;
   display: block;
+  border: 1px solid var(--board-border);
+  border-radius: calc(var(--radius-card) - 2px);
   background-color: var(--board-surface);
+  box-shadow: inset 0 0 0 1px var(--board-frame-divider);
 }
 
 /* ---------- Right-panel modules ---------- */
@@ -941,9 +968,8 @@ html[data-theme="light"] .start-theme-toggle-btn[data-mode="light"] {
 }
 
 /* ============================================================
-   Light hub theme — themes the page/panels/sidebars/start screen.
-   The board stays dark (pinned in `.board-wrapper`). Warm-monochrome,
-   editorial palette (minimalist-ui base). All pairs checked for WCAG AA.
+   Light hub theme — page, panels, start screen, and board shell all follow
+   same warm-monochrome token system. Editorial palette, WCAG AA pairs.
    ============================================================ */
 html[data-theme="light"] {
   /* Neutros */
@@ -966,7 +992,20 @@ html[data-theme="light"] {
   --accent-soft:   rgba(63, 98, 18, 0.12);
   --accent-line:   rgba(63, 98, 18, 0.55);
 
+  /* Board shell */
+  --board-frame-shadow:       0 20px 38px rgba(31, 35, 40, 0.08);
+  --board-frame-inner-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92),
+                              inset 0 0 0 1px rgba(255, 255, 255, 0.56);
+  --board-frame-sheen:        rgba(255, 255, 255, 0.84);
+  --board-frame-divider:      rgba(63, 98, 18, 0.10);
+  --board-frame-ambient:      var(--accent-soft);
+  --board-canvas-grid:        rgba(31, 35, 40, 0.065);
+
   /* Tokens compartidos por la pantalla de inicio (fuera del board) */
+  --board-overlay-bg:         rgba(245, 244, 240, 0.78);
+  --board-overlay-card-bg:    rgba(255, 255, 255, 0.94);
+  --board-overlay-card-shadow:0 20px 38px rgba(31, 35, 40, 0.12),
+                              inset 0 1px 0 rgba(255, 255, 255, 0.72);
   --board-overlay-border:  #dcdbd4;
   --board-overlay-title:   #1f2328;
   --board-overlay-heading: #3f6212;

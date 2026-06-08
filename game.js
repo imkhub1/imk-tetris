@@ -258,7 +258,9 @@ function setSkin(name) {
   try { localStorage.setItem('imktetris.skin', name); } catch (_) {}
 
   document.querySelectorAll('.skin-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.skin === name);
+    const isActive = btn.dataset.skin === name;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
   });
 
   // Only re-render if the game is already running (current is defined)
@@ -505,7 +507,9 @@ function init() {
     if (saved && SKINS[saved]) {
       activeSkin = saved;
       document.querySelectorAll('.skin-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.skin === saved);
+        const isActive = btn.dataset.skin === saved;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', String(isActive));
       });
     }
   } catch (_) {}
@@ -864,12 +868,14 @@ function endGame() {
     renderHsTable(overlayHsBody, -1);
     overlayHsSection.classList.remove('hidden');
     overlaySub.textContent = 'Press ENTER to restart';
+    overlayTitle.focus();
   }
 }
 
 // ── Pause Menu ────────────────────────────────────────────────
 function showPauseMenu() {
   pauseMenu.classList.remove('hidden');
+  btnResume.focus();
 }
 
 function hidePauseMenu() {

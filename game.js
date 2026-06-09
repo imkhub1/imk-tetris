@@ -1556,3 +1556,13 @@ btnLevelInc.addEventListener('click', () => {
 // ── Boot ──────────────────────────────────────────────────────
 updateStartLevelDisplay();
 showStartScreen();
+
+// Exported for unit testing in Node/Jest. Not part of the browser API.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    shade, hexToRgba, rotateCW, cornerRadii, easeOutBack,
+    calcDropInterval, sanitizeHsName, getValidHsName,
+    NB_TOP, NB_RIGHT, NB_BOTTOM, NB_LEFT,
+    LINE_SCORES, COLS, ROWS, BLOCK,
+  };
+}

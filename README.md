@@ -2,7 +2,11 @@
 
 Classic **Tetris** implementation in vanilla JavaScript, using HTML5 Canvas and CSS. No external dependencies, no frameworks, no build step: just open and play.
 
-[![▶ Play now](https://img.shields.io/badge/▶%20Play%20now-imkhub1.github.io-brightgreen?style=for-the-badge&logo=github)](https://imkhub1.github.io/imk-tetris/)
+<div align="center">
+
+[![▶ PLAY NOW](https://img.shields.io/badge/▶%20%20PLAY%20NOW-7eff6e?style=for-the-badge&labelColor=0d1117&color=7eff6e&logoColor=7eff6e)](https://imkhub1.github.io/imk-tetris/)
+
+</div>
 ![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-orange)
 ![CSS3](https://img.shields.io/badge/CSS3-blueviolet)
 ![JavaScript Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
@@ -13,14 +17,9 @@ Classic **Tetris** implementation in vanilla JavaScript, using HTML5 Canvas and 
 
 > 💡 **No install needed** → click the green badge above to play in the browser.
 
-<!-- DEMO GIF — record gameplay with ScreenToGif or ShareX and upload to assets/gameplay.gif -->
-<!-- ![Gameplay](assets/gameplay.gif) -->
-
 | Start screen | Gameplay | Game Over |
 |---|---|---|
-| *(screenshot pending)* | *(screenshot pending)* | *(screenshot pending)* |
-
-> To add screenshots: take screenshots or record a GIF of the game, save them in `assets/` and replace the cells above with `![Description](assets/name.png)` or `![Description](assets/name.gif)`.
+| ![Start screen](assets/start-screen.jpg) | ![Gameplay](assets/gameplay.gif) | ![Game Over](assets/game-over.jpg) |
 
 ---
 

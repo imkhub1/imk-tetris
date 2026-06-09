@@ -2,9 +2,25 @@
 
 Implementación del clásico **Tetris** en JavaScript vanilla, usando HTML5 Canvas y CSS. Sin dependencias externas, sin frameworks, sin proceso de build: solo abrir y jugar.
 
+[![▶ Jugar ahora](https://img.shields.io/badge/▶%20Jugar%20ahora-imkhub1.github.io-brightgreen?style=for-the-badge&logo=github)](https://imkhub1.github.io/imk-tetris/)
 ![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-orange)
 ![CSS3](https://img.shields.io/badge/CSS3-blueviolet)
 ![JavaScript Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
+
+---
+
+## 📸 Vista previa
+
+> 💡 **Sin instalar nada** → haz clic en el badge verde de arriba para jugar en el navegador.
+
+<!-- DEMO GIF — graba gameplay con ScreenToGif o ShareX y sube el archivo a assets/gameplay.gif -->
+<!-- ![Gameplay](assets/gameplay.gif) -->
+
+| Pantalla de inicio | Gameplay | Game Over |
+|---|---|---|
+| *(captura pendiente)* | *(captura pendiente)* | *(captura pendiente)* |
+
+> Para agregar las capturas: toma screenshots o graba un GIF del juego, guárdalos en `assets/` y reemplaza las celdas de arriba con `![Descripción](assets/nombre.png)` o `![Descripción](assets/nombre.gif)`.
 
 ---
 
@@ -76,6 +92,7 @@ Luego abre `http://localhost:8000` en el navegador.
 
 ```
 tetris/
+├── assets/          # Screenshots y GIFs para README
 ├── index.html       # Estructura del DOM y canvas
 ├── style.css        # Estilos (dark retro arcade theme)
 ├── theme-init.js    # Aplica el tema guardado antes del primer render (evita flash)

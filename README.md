@@ -19,7 +19,7 @@ Classic **Tetris** implementation in vanilla JavaScript, using HTML5 Canvas and 
 
 | Start screen | Gameplay | Game Over |
 |---|---|---|
-| ![Start screen](assets/start-screen.jpg) | *(GIF pending)* | ![Game Over](assets/game-over.jpg) |
+| ![Start screen](assets/start-screen.jpg) | ![Gameplay](assets/gameplay.gif) | ![Game Over](assets/game-over.jpg) |
 
 ---
 

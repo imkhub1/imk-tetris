@@ -23,8 +23,9 @@ const Sfx = (function () {
   let master = null;       // persisted volume / mute lives here
   let gameplayBus = null;  // full-level gameplay SFX
   let uiBus = null;        // quieter interface SFX
-  let ambientBus = null;   // background ambience (under master, so mute/volume apply)
-  let ambient = null;      // active ambience graph, or null when stopped
+  let ambientBus = null;   // background music (under master, so mute/volume apply)
+  let music = null;        // active music graph, or null when stopped
+  let wantedMusic = null;  // requested music mode: 'menu' | 'game' | null
   let activeVoices = 0;
 
   const lastPlayed = Object.create(null); // sound name -> performance.now() ms
@@ -77,7 +78,13 @@ const Sfx = (function () {
   function unlock() {
     const c = ensureCtx();
     if (!c) return;
-    if (c.state === 'suspended') c.resume();
+    if (c.state === 'suspended') {
+      c.resume().then(() => {
+        if (wantedMusic && !music) startMusic(wantedMusic);
+      }).catch(() => {});
+      return;
+    }
+    if (wantedMusic && !music) startMusic(wantedMusic);
   }
 
   // First user gesture unlocks audio (autoplay-policy safe).
@@ -249,137 +256,282 @@ const Sfx = (function () {
     fn(arg);
   }
 
-  // ── Ambient bed (chiptune game groove) ──────────────────────
-  // A driving, instrumental chiptune loop: a square-wave arpeggio lead over an
-  // i–VI–III–VII progression (Am–F–C–G), a triangle bassline, and a simple
-  // kick / snare / hi-hat drum kit (all synthesised). A look-ahead step
-  // sequencer schedules sixteenth notes so the groove loops seamlessly.
-  // Everything routes through ambientBus -> master, so mute/volume apply. Not
-  // voice-counted, so the bed never starves gameplay SFX.
-  const AMBIENT_BPM = 128;
-  const AMBIENT_STEP = (60 / AMBIENT_BPM) / 4; // one sixteenth note, seconds
-  const AMBIENT_STEPS_PER_BAR = 16;
-  // Each chord: bass root + the four arpeggio notes (root, 3rd, 5th, octave).
-  const AMBIENT_PROG = [
-    { root: 110.00, arp: [220.00, 261.63, 329.63, 440.00] }, // Am
-    { root:  87.31, arp: [174.61, 220.00, 261.63, 349.23] }, // F
-    { root: 130.81, arp: [261.63, 329.63, 392.00, 523.25] }, // C
-    { root:  98.00, arp: [196.00, 246.94, 293.66, 392.00] }, // G
-  ];
-  // Bouncing arpeggio figure indexed into the chord's four notes (loops by mod).
-  const AMBIENT_ARP = [0, 1, 2, 3, 2, 3, 1, 2];
+  // ── Modern background music (menu + gameplay) ────────────────
+  // Two different synth-driven themes:
+  // - menu: very slow, smooth, spacious groove for start screen
+  // - game: mid-tempo smooth groove for active play
+  // Both route through ambientBus -> master and use a look-ahead sequencer.
+  const STEPS_PER_BAR = 16;
+  const THEMES = {
+    menu: {
+      bpm: 92,
+      leadWave: 'sine',
+      leadDurMult: 3.4,
+      leadGain: 0.34,
+      padGain: 0.36,
+      bassWave: 'triangle',
+      bassGain: 0.40,
+      drumGain: 0.30,
+      leadPattern: [0, 1, 2, 1, 3, 2, 1, 4],
+      progression: [
+        { root: 98.00,  lead: [196.00, 246.94, 293.66, 392.00, 493.88], pad: [196.00, 246.94, 293.66] }, // G
+        { root: 87.31,  lead: [174.61, 220.00, 261.63, 349.23, 440.00], pad: [174.61, 220.00, 261.63] }, // F
+        { root: 110.00, lead: [220.00, 277.18, 329.63, 440.00, 554.37], pad: [220.00, 277.18, 329.63] }, // A
+        { root: 82.41,  lead: [164.81, 207.65, 246.94, 329.63, 415.30], pad: [164.81, 207.65, 246.94] }, // E
+      ],
+      kickPattern: [0, 8, 12],
+      snarePattern: [4, 12],
+      hatPattern: [7, 15],
+      hatCutoff: 6800,
+      hatGain: 0.10,
+      outGain: 0.9,
+      fadeIn: 1.2,
+      fadeOut: 0.6,
+      lookAhead: 0.24,
+      schedulerMs: 70,
+    },
+    game: {
+      bpm: 112,
+      leadWave: 'sine',
+      leadDurMult: 2.6,
+      leadGain: 0.38,
+      padGain: 0.30,
+      bassWave: 'triangle',
+      bassGain: 0.44,
+      drumGain: 0.40,
+      leadPattern: [0, 2, 1, 3, 2, 4, 3, 1],
+      progression: [
+        { root: 130.81, lead: [261.63, 329.63, 392.00, 523.25, 659.25], pad: [261.63, 329.63, 392.00] }, // C
+        { root: 164.81, lead: [329.63, 415.30, 493.88, 659.25, 830.61], pad: [329.63, 415.30, 493.88] }, // E
+        { root: 146.83, lead: [293.66, 369.99, 440.00, 587.33, 739.99], pad: [293.66, 369.99, 440.00] }, // D
+        { root: 174.61, lead: [349.23, 440.00, 523.25, 698.46, 880.00], pad: [349.23, 440.00, 523.25] }, // F
+      ],
+      kickPattern: [0, 6, 8, 14],
+      snarePattern: [4, 12],
+      hatPattern: [3, 7, 11, 15],
+      hatCutoff: 7600,
+      hatGain: 0.15,
+      outGain: 0.95,
+      fadeIn: 1.0,
+      fadeOut: 0.5,
+      lookAhead: 0.22,
+      schedulerMs: 60,
+    },
+  };
 
-  function startAmbient() {
+  function createNoiseBuffer(c) {
+    const buffer = c.createBuffer(1, Math.floor(c.sampleRate * 0.3), c.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    return buffer;
+  }
+
+  function playSynthNote(c, opts) {
+    const {
+      at,
+      freq,
+      dest,
+      type = 'sine',
+      dur = 0.2,
+      peak = 0.8,
+      attack = 0.01,
+      freqEnd = null,
+    } = opts;
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, at);
+    if (freqEnd) o.frequency.exponentialRampToValueAtTime(Math.max(1, freqEnd), at + dur);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, peak), at + attack);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    o.connect(g);
+    g.connect(dest);
+    o.start(at);
+    o.stop(at + dur + 0.03);
+  }
+
+  function playKick(c, at, dest, amount = 1) {
+    playSynthNote(c, {
+      at,
+      freq: 130,
+      freqEnd: 46,
+      dest,
+      type: 'sine',
+      dur: 0.18,
+      peak: 0.95 * amount,
+      attack: 0.004,
+    });
+  }
+
+  function playSnare(c, at, dest, noiseBuf, amount = 1) {
+    const s = c.createBufferSource();
+    s.buffer = noiseBuf;
+    const bp = c.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 1800;
+    bp.Q.value = 0.7;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(0.46 * amount, at + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.17);
+    s.connect(bp);
+    bp.connect(g);
+    g.connect(dest);
+    s.start(at);
+    s.stop(at + 0.2);
+  }
+
+  function playHat(c, at, dest, noiseBuf, cutoff, gain) {
+    const s = c.createBufferSource();
+    s.buffer = noiseBuf;
+    const hp = c.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = cutoff;
+    const g = c.createGain();
+    g.gain.setValueAtTime(gain, at);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.05);
+    s.connect(hp);
+    hp.connect(g);
+    g.connect(dest);
+    s.start(at);
+    s.stop(at + 0.08);
+  }
+
+  function fadeOutMusic(oldMusic, fadeOutSec = 0.4) {
+    if (!oldMusic) return;
+    if (oldMusic.stop) oldMusic.stop();
+    clearInterval(oldMusic.timer);
+    const c = ctx;
+    if (!c) return;
+    const now = c.currentTime;
+    try {
+      oldMusic.out.gain.cancelScheduledValues(now);
+      oldMusic.out.gain.setValueAtTime(oldMusic.out.gain.value, now);
+      oldMusic.out.gain.linearRampToValueAtTime(0.0001, now + fadeOutSec);
+    } catch (_) {}
+    setTimeout(() => {
+      try { oldMusic.out.disconnect(); } catch (_) {}
+    }, Math.ceil((fadeOutSec + 0.25) * 1000));
+  }
+
+  function stopMusicNow(oldMusic) {
+    if (!oldMusic) return;
+    if (oldMusic.stop) oldMusic.stop();
+    clearInterval(oldMusic.timer);
+    try { oldMusic.out.disconnect(); } catch (_) {}
+  }
+
+  function startMusic(kind) {
+    const config = THEMES[kind];
+    if (!config) return;
+    wantedMusic = kind;
+
     const c = ensureCtx();
     if (!c) return;
-    if (ambient) return; // already running
-    if (c.state !== 'running') c.resume().catch(() => {});
+    if (c.state !== 'running') {
+      c.resume().then(() => {
+        if (wantedMusic === kind) startMusic(kind);
+      }).catch(() => {});
+      return;
+    }
 
+    if (music && music.kind === kind) return;
+
+    const oldMusic = music;
+    music = null;
+    if (oldMusic) stopMusicNow(oldMusic);
+
+    const stepDur = (60 / config.bpm) / 4;
     const now = c.currentTime;
 
     const out = c.createGain();
     out.gain.setValueAtTime(0.0001, now);
-    out.gain.linearRampToValueAtTime(1, now + 0.8); // quick fade-in
+    out.gain.linearRampToValueAtTime(config.outGain, now + config.fadeIn);
     out.connect(ambientBus);
 
-    // Sub-mixes so the lead, bass and drums sit at fixed relative levels.
     const lead = c.createGain();
-    lead.gain.value = 0.13;
+    lead.gain.value = config.leadGain;
     const leadLp = c.createBiquadFilter();
     leadLp.type = 'lowpass';
-    leadLp.frequency.value = 2800;
-    leadLp.Q.value = 0.6;
+    leadLp.frequency.value = kind === 'menu' ? 3400 : 3000;
+    leadLp.Q.value = 0.7;
     lead.connect(leadLp);
     leadLp.connect(out);
 
+    const pad = c.createGain();
+    pad.gain.value = config.padGain;
+    const padLp = c.createBiquadFilter();
+    padLp.type = 'lowpass';
+    padLp.frequency.value = kind === 'menu' ? 1600 : 1400;
+    padLp.Q.value = 0.3;
+    pad.connect(padLp);
+    padLp.connect(out);
+
     const bass = c.createGain();
-    bass.gain.value = 0.20;
-    bass.connect(out);
+    bass.gain.value = config.bassGain;
+    const bassLp = c.createBiquadFilter();
+    bassLp.type = 'lowpass';
+    bassLp.frequency.value = kind === 'menu' ? 880 : 980;
+    bass.connect(bassLp);
+    bassLp.connect(out);
 
     const drums = c.createGain();
-    drums.gain.value = 0.5;
+    drums.gain.value = config.drumGain;
     drums.connect(out);
 
-    // One short noise buffer reused by the snare / hi-hat.
-    const noiseBuf = c.createBuffer(1, Math.floor(c.sampleRate * 0.3), c.sampleRate);
-    const nd = noiseBuf.getChannelData(0);
-    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const noiseBuf = createNoiseBuffer(c);
 
-    function blip(at, freq, dur, peak, type, dest) {
-      const o = c.createOscillator();
-      const g = c.createGain();
-      o.type = type;
-      o.frequency.setValueAtTime(freq, at);
-      g.gain.setValueAtTime(0.0001, at);
-      g.gain.exponentialRampToValueAtTime(peak, at + 0.008);
-      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
-      o.connect(g);
-      g.connect(dest);
-      o.start(at);
-      o.stop(at + dur + 0.02);
-    }
+    function scheduleStep(at, step) {
+      const bar = Math.floor(step / STEPS_PER_BAR) % config.progression.length;
+      const inBar = step % STEPS_PER_BAR;
+      const chord = config.progression[bar];
 
-    function kick(at) {
-      const o = c.createOscillator();
-      const g = c.createGain();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(125, at);
-      o.frequency.exponentialRampToValueAtTime(45, at + 0.12);
-      g.gain.setValueAtTime(0.0001, at);
-      g.gain.exponentialRampToValueAtTime(0.9, at + 0.006);
-      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.18);
-      o.connect(g);
-      g.connect(drums);
-      o.start(at);
-      o.stop(at + 0.2);
-    }
+      // Lead on eighth-notes for melodic motion.
+      if (inBar % 2 === 0) {
+        const leadIdx = config.leadPattern[(step / 2) % config.leadPattern.length];
+        playSynthNote(c, {
+          at,
+          freq: chord.lead[leadIdx % chord.lead.length],
+          dest: lead,
+          type: config.leadWave,
+          dur: stepDur * config.leadDurMult,
+          peak: 0.75,
+          attack: 0.012,
+        });
+      }
 
-    function snare(at) {
-      const s = c.createBufferSource();
-      s.buffer = noiseBuf;
-      const bp = c.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.value = 1900;
-      bp.Q.value = 0.7;
-      const g = c.createGain();
-      g.gain.setValueAtTime(0.0001, at);
-      g.gain.exponentialRampToValueAtTime(0.45, at + 0.005);
-      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
-      s.connect(bp);
-      bp.connect(g);
-      g.connect(drums);
-      s.start(at);
-      s.stop(at + 0.18);
-    }
+      // Warm pad chord on each beat.
+      if (inBar % 4 === 0) {
+        chord.pad.forEach((freq, idx) => {
+          playSynthNote(c, {
+            at: at + idx * 0.004,
+            freq,
+            dest: pad,
+            type: 'triangle',
+            dur: stepDur * 3.8,
+            peak: 0.45,
+            attack: 0.018,
+          });
+        });
+      }
 
-    function hat(at) {
-      const s = c.createBufferSource();
-      s.buffer = noiseBuf;
-      const hp = c.createBiquadFilter();
-      hp.type = 'highpass';
-      hp.frequency.value = 7500;
-      const g = c.createGain();
-      g.gain.setValueAtTime(0.18, at);
-      g.gain.exponentialRampToValueAtTime(0.0001, at + 0.04);
-      s.connect(hp);
-      hp.connect(g);
-      g.connect(drums);
-      s.start(at);
-      s.stop(at + 0.06);
-    }
+      // Bass pulse on each beat.
+      if (inBar % 4 === 0) {
+        playSynthNote(c, {
+          at,
+          freq: chord.root,
+          dest: bass,
+          type: config.bassWave,
+          dur: stepDur * 2.9,
+          peak: 0.9,
+          attack: 0.008,
+        });
+      }
 
-    function scheduleStep(at, s) {
-      const bar = Math.floor(s / AMBIENT_STEPS_PER_BAR) % AMBIENT_PROG.length;
-      const inBar = s % AMBIENT_STEPS_PER_BAR;
-      const chord = AMBIENT_PROG[bar];
-      // Arpeggio lead on every sixteenth.
-      blip(at, chord.arp[AMBIENT_ARP[s % AMBIENT_ARP.length]], AMBIENT_STEP * 0.9, 0.9, 'square', lead);
-      // Bassline on every beat.
-      if (inBar % 4 === 0) blip(at, chord.root, AMBIENT_STEP * 3.4, 0.9, 'triangle', bass);
-      // Drum kit.
-      if (inBar === 0 || inBar === 8) kick(at);
-      if (inBar === 4 || inBar === 12) snare(at);
-      if (inBar % 2 === 1) hat(at);
+      if (config.kickPattern.includes(inBar)) playKick(c, at, drums, 1);
+      if (config.snarePattern.includes(inBar)) playSnare(c, at, drums, noiseBuf, 1);
+      if (config.hatPattern.includes(inBar)) playHat(c, at, drums, noiseBuf, config.hatCutoff, config.hatGain);
     }
 
     let stopped = false;
@@ -387,35 +539,26 @@ const Sfx = (function () {
     let nextTime = now + 0.12;
     function scheduler() {
       if (stopped) return;
-      while (nextTime < c.currentTime + 0.2) {
+      while (nextTime < c.currentTime + config.lookAhead) {
         scheduleStep(nextTime, step);
         step++;
-        nextTime += AMBIENT_STEP;
+        nextTime += stepDur;
       }
     }
     scheduler();
-    const timer = setInterval(scheduler, 60);
+    const timer = setInterval(scheduler, config.schedulerMs);
 
-    ambient = { out, timer, stop: () => { stopped = true; } };
+    music = { kind, out, timer, stop: () => { stopped = true; } };
   }
 
-  function stopAmbient() {
-    if (!ambient) return;
-    const old = ambient;
-    ambient = null; // release the slot immediately so a restart is safe
-    if (old.stop) old.stop();
-    clearInterval(old.timer);
-    const c = ctx;
-    if (!c) return;
-    const now = c.currentTime;
-    try {
-      old.out.gain.cancelScheduledValues(now);
-      old.out.gain.setValueAtTime(old.out.gain.value, now);
-      old.out.gain.linearRampToValueAtTime(0.0001, now + 0.4); // fade out
-    } catch (_) {}
-    setTimeout(() => {
-      try { old.out.disconnect(); } catch (_) {}
-    }, 700);
+  function stopMusic(kind = null) {
+    if (kind == null) wantedMusic = null;
+    else if (wantedMusic === kind) wantedMusic = null;
+    if (!music) return;
+    if (kind && music.kind !== kind) return;
+    const oldMusic = music;
+    music = null;
+    fadeOutMusic(oldMusic, THEMES[oldMusic.kind]?.fadeOut || 0.4);
   }
 
   function setVolume(v) {
@@ -440,9 +583,16 @@ const Sfx = (function () {
     setMuted,
     toggleMute,
     isMuted: () => muted,
-    startAmbient,
-    stopAmbient,
-    isAmbientOn: () => !!ambient,
+    startMenuMusic: () => startMusic('menu'),
+    stopMenuMusic: () => stopMusic('menu'),
+    isMenuMusicOn: () => !!music && music.kind === 'menu',
+    startGameplayMusic: () => startMusic('game'),
+    stopGameplayMusic: () => stopMusic('game'),
+    isGameplayMusicOn: () => !!music && music.kind === 'game',
+    // Backward-compatible aliases for existing game logic.
+    startAmbient: () => startMusic('game'),
+    stopAmbient: () => stopMusic('game'),
+    isAmbientOn: () => !!music && music.kind === 'game',
   };
 })();
 

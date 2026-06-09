@@ -514,6 +514,7 @@ function renderHsTable(tbody, highlightIdx) {
 function showStartScreen() {
   renderHsTable(startHsBody, -1);
   startScreen.classList.remove('hidden');
+  Sfx.startMenuMusic();
 }
 
 function hideStartScreen() {
@@ -525,6 +526,7 @@ function hideStartScreen() {
 function startGameFromStartScreen() {
   Sfx.unlock();
   Sfx.play('gamestart');
+  Sfx.stopMenuMusic();
   hideStartScreen();
   init();
 }
@@ -540,7 +542,7 @@ function returnToStartScreen() {
   hardDropMouseDown = false;
   if (animId) cancelAnimationFrame(animId);
   animId = null;
-  Sfx.stopAmbient();
+  Sfx.stopGameplayMusic();
   hideCountdown();
   hidePauseMenu();
   hideOverlay();
@@ -1130,7 +1132,7 @@ function endGame() {
   hideCountdown();
   cancelAnimationFrame(animId);
   Sfx.play('gameover');
-  Sfx.stopAmbient();
+  Sfx.stopGameplayMusic();
 
   overlayTitle.textContent = 'GAME OVER';
   overlay.classList.remove('hidden');
@@ -1222,12 +1224,12 @@ function togglePause() {
   paused = !paused;
   if (paused) {
     Sfx.play('pause');
-    Sfx.stopAmbient();
+    Sfx.stopGameplayMusic();
     cancelAnimationFrame(animId);
     showPauseMenu();
   } else {
     Sfx.play('resume');
-    Sfx.startAmbient();
+    Sfx.startGameplayMusic();
     hidePauseMenu();
     if (!frozen) {
       lastTime   = null;
@@ -1276,7 +1278,7 @@ function loop(timestamp) {
       countStart = null;
       hideCountdown();
       Sfx.play('countbeep', true); // "go" blip as the piece is released
-      Sfx.startAmbient();          // music kicks in exactly when play begins
+      Sfx.startGameplayMusic();    // music kicks in exactly when play begins
       accumulated = 0;     // start gravity fresh, no banked time from the count
     } else {
       const n = 3 - Math.floor(elapsed / 1000); // 3, 2, 1

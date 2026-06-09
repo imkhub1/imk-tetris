@@ -47,11 +47,13 @@ Sound is a separate module, `audio.js`, loaded **before** `game.js` in `index.ht
 
 **Anti-spam**: per-sound cooldowns (`throttled`) plus a global `MAX_VOICES` cap. Rapid input (move/rotate/soft-drop) cannot pile up. The ambience uses dedicated long-lived nodes that are **not** voice-counted.
 
-**Ambience**: `startAmbient()` plays an instrumental chiptune game groove — a square-wave arpeggio lead over an `Am–F–C–G` progression, a triangle bassline, and a synthesised kick/snare/hi-hat kit, driven by a look-ahead sixteenth-note step sequencer (`AMBIENT_BPM`, `AMBIENT_PROG`, `AMBIENT_ARP`). Lead/bass/drums each get their own sub-gain, all routed `→ ambientBus → master`; `stopAmbient()` halts scheduling, fades out, and tears the nodes down. `game.js` starts it when a game begins and on resume, and stops it on pause, game over, and return-to-start.
+**Background music**: `audio.js` now has two modern synthesized themes with separate sequencing profiles: a slower, smoother menu loop for the start screen and a mid-tempo smooth gameplay loop. Both are look-ahead sixteenth-note sequencers (lead/pad/bass/drums), routed `→ ambientBus → master`, with independent cadence, drum patterns, and chord progressions so they sound clearly different.
+
+`game.js` starts menu music on the start screen, stops it when launching a run, and starts gameplay music exactly when the 3-2-1 countdown ends. Gameplay music stops on pause, game over, and return-to-start, and resumes on unpause.
 
 **Persistence** (localStorage): `imktetris.audio.volume` (0–1) and `imktetris.audio.muted` (`'1'`/`'0'`).
 
-**API**: `Sfx.play(name, arg)`, `Sfx.setVolume(v)`, `Sfx.getVolume()`, `Sfx.toggleMute()`, `Sfx.setMuted(m)`, `Sfx.isMuted()`, `Sfx.unlock()`, `Sfx.startAmbient()`, `Sfx.stopAmbient()`, `Sfx.isAmbientOn()`. Sound names: `move`, `rotate`, `softdrop`, `harddrop`, `lock`, `lineclear(n)`, `levelup`, `pause`, `resume`, `gameover`, `uiclick`, `gamestart`, `countbeep(go)`.
+**API**: `Sfx.play(name, arg)`, `Sfx.setVolume(v)`, `Sfx.getVolume()`, `Sfx.toggleMute()`, `Sfx.setMuted(m)`, `Sfx.isMuted()`, `Sfx.unlock()`, `Sfx.startMenuMusic()`, `Sfx.stopMenuMusic()`, `Sfx.isMenuMusicOn()`, `Sfx.startGameplayMusic()`, `Sfx.stopGameplayMusic()`, `Sfx.isGameplayMusicOn()`. Backward-compatible aliases remain: `Sfx.startAmbient()`, `Sfx.stopAmbient()`, `Sfx.isAmbientOn()` (mapped to gameplay music). Sound names: `move`, `rotate`, `softdrop`, `harddrop`, `lock`, `lineclear(n)`, `levelup`, `pause`, `resume`, `gameover`, `uiclick`, `gamestart`, `countbeep(go)`.
 
 `game.js` calls `Sfx.play(...)` at the matching game events and wires the `#sound-toggle` / `#start-sound-toggle` (mute, kept in sync) and the `#volume-slider` (now inside the pause menu). The light/dark, sound, and freeze toggles sit in a vertical `.board-toggles` column glued to the right edge of the board (inside `.board-stage`). Interface buttons get `uiclick` via one delegated listener. To add a new sound, add an entry to the `sounds` map in `audio.js` and call `Sfx.play('name')` at the event site.
 

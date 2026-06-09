@@ -245,18 +245,6 @@ const SKINS = {
   },
 };
 
-// Piece colors by index (0 = empty) – kept for legacy reference; use getPalette() in rendering
-const COLORS = [
-  null,
-  '#00f5ff', // I – cyan
-  '#ffd000', // O – yellow
-  '#aa00ff', // T – purple
-  '#00ff6a', // S – green
-  '#ff2d78', // Z – pink
-  '#1e90ff', // J – blue
-  '#ff7700', // L – orange
-];
-
 // ── Active skin ───────────────────────────────────────────────
 let activeSkin = 'pastel';
 
@@ -306,7 +294,7 @@ function setSkin(name) {
 }
 
 // Piece definitions: each is a square matrix.
-// Index matches COLORS (1-7).
+// Index matches the skin palettes (1-7).
 const PIECES = [
   null,
   // I (4×4)
@@ -472,14 +460,19 @@ function qualifiesForTop5(s) {
   return hs.length < MAX_HS || s >= hs[hs.length - 1].score;
 }
 
-/** Insert a record, sort desc, keep top 5. Returns the new index. */
+/** Insert a record, sort desc, keep top 5. Returns the new index (-1 if not kept). */
 function insertHighScore(record) {
   const hs = loadHighScores();
-  hs.push(record);
-  hs.sort((a, b) => b.score - a.score);
-  const trimmed = hs.slice(0, MAX_HS);
+  // Tag entries so the sort stays stable but the just-added record wins ties.
+  // qualifiesForTop5 lets a score that *ties* the lowest entry through, so the
+  // new record must sort ahead of equal-score existing ones or it would be
+  // trimmed away and silently lost.
+  const tagged = hs.map(r => ({ r, isNew: false }));
+  tagged.push({ r: record, isNew: true });
+  tagged.sort((a, b) => (b.r.score - a.r.score) || (a.isNew ? -1 : b.isNew ? 1 : 0));
+  const trimmed = tagged.slice(0, MAX_HS).map(t => t.r);
   saveHighScores(trimmed);
-  return trimmed.findIndex(r => r.name === record.name && r.score === record.score && r.lines === record.lines);
+  return trimmed.indexOf(record);
 }
 
 // ── High-score table rendering ────────────────────────────────
@@ -1112,12 +1105,6 @@ function updateHUD() {
 }
 
 // ── Overlay ───────────────────────────────────────────────────
-function showOverlay(title, sub) {
-  overlayTitle.textContent = title;
-  overlaySub.textContent   = sub;
-  overlay.classList.remove('hidden');
-}
-
 function hideOverlay() {
   overlay.classList.add('hidden');
   nameEntry.classList.add('hidden');
@@ -1562,6 +1549,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     shade, hexToRgba, rotateCW, cornerRadii, easeOutBack,
     calcDropInterval, sanitizeHsName, getValidHsName,
+    qualifiesForTop5, insertHighScore,
     NB_TOP, NB_RIGHT, NB_BOTTOM, NB_LEFT,
     LINE_SCORES, COLS, ROWS, BLOCK,
   };

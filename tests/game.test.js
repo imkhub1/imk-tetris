@@ -10,6 +10,8 @@ const {
   calcDropInterval,
   sanitizeHsName,
   getValidHsName,
+  qualifiesForTop5,
+  insertHighScore,
   easeOutBack,
   NB_TOP,
   NB_RIGHT,
@@ -189,6 +191,60 @@ describe('getValidHsName', () => {
 
   test('returns sanitized name when valid', () => {
     expect(getValidHsName('Kevin')).toBe('KEVIN');
+  });
+});
+
+// ── High scores (qualify + insert) ────────────────────────────
+describe('high scores', () => {
+  const HS_KEY = 'imktetris.highscores';
+
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  const seed = (...scores) => {
+    const hs = scores.map((score, i) => ({
+      name: String.fromCharCode(65 + i).repeat(3),
+      score,
+      lines: 0,
+      combo: 0,
+    }));
+    window.localStorage.setItem(HS_KEY, JSON.stringify(hs));
+    return hs;
+  };
+
+  test('qualifies when the table is not full', () => {
+    seed(1000);
+    expect(qualifiesForTop5(1)).toBe(true);
+  });
+
+  test('qualifies when score beats the lowest of a full table', () => {
+    seed(5000, 4000, 3000, 2000, 1000);
+    expect(qualifiesForTop5(1500)).toBe(true);
+    expect(qualifiesForTop5(500)).toBe(false);
+  });
+
+  test('a tie with the lowest full-table score is kept (regression)', () => {
+    seed(3000, 2000, 1500, 1000, 1000);
+    const record = { name: 'NEW', score: 1000, lines: 7, combo: 2 };
+    expect(qualifiesForTop5(record.score)).toBe(true);
+
+    const idx = insertHighScore(record);
+    expect(idx).toBeGreaterThanOrEqual(0);
+
+    const saved = JSON.parse(window.localStorage.getItem(HS_KEY));
+    expect(saved).toHaveLength(5);
+    expect(saved[idx]).toMatchObject({ name: 'NEW', score: 1000 });
+    expect(saved.some(r => r.name === 'NEW')).toBe(true);
+  });
+
+  test('insert keeps only the top 5, sorted descending', () => {
+    seed(3000, 2000, 1500, 1000, 500);
+    insertHighScore({ name: 'TOP', score: 9000, lines: 1, combo: 1 });
+    const saved = JSON.parse(window.localStorage.getItem(HS_KEY));
+    expect(saved).toHaveLength(5);
+    expect(saved[0]).toMatchObject({ name: 'TOP', score: 9000 });
+    expect(saved.some(r => r.score === 500)).toBe(false);
   });
 });
 

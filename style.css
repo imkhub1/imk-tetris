@@ -51,12 +51,12 @@ input, textarea {
   --border:        #242832;
   --border-strong: #333845;
 
-  /* Tipografía / texto */
+  /* Typography / text */
   --text:          #f2f3f5;
   --text-dim:      #a7afbd;
   --text-faint:    #8a92a3;
 
-  /* Acento primario (brand) */
+  /* Primary accent (brand) */
   --primary:       #bef264;
   --primary-strong:#d3ff7e;
   --accent:        #bef264;
@@ -1078,12 +1078,12 @@ html[data-theme="light"] {
   --border:        #dcdbd4;
   --border-strong: #c4c2b8;
 
-  /* Texto (charcoal sobre bone) */
+  /* Text (charcoal on bone) */
   --text:          #1f2328;
   --text-dim:      #54524c;
   --text-faint:    #5f5d56;
 
-  /* Acento (lime no contrasta en claro → oliva accesible) */
+  /* Accent (lime lacks contrast on light → accessible olive) */
   --primary:       #3f6212;
   --primary-strong:#4d7c0f;
   --accent:        #3f6212;
@@ -1100,7 +1100,7 @@ html[data-theme="light"] {
   --board-frame-ambient:      var(--accent-soft);
   --board-canvas-grid:        rgba(31, 35, 40, 0.065);
 
-  /* Tokens compartidos por la pantalla de inicio (fuera del board) */
+  /* Tokens shared by the start screen (outside the board) */
   --board-overlay-bg:         rgba(245, 244, 240, 0.78);
   --board-overlay-card-bg:    rgba(255, 255, 255, 0.94);
   --board-overlay-card-shadow:0 20px 38px rgba(31, 35, 40, 0.12),

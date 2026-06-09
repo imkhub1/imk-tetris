@@ -3,16 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'none';" />
     <title>imk Tetris</title>
     <link rel="stylesheet" href="style.css" />
-    <script>
-      // Apply saved hub theme before first paint to avoid a flash of dark.
-      try {
-        if (localStorage.getItem('imktetris.theme') === 'light') {
-          document.documentElement.setAttribute('data-theme', 'light');
-        }
-      } catch (e) {}
-    </script>
+    <!-- Must run before body renders to avoid a flash of unstyled dark content. -->
+    <script src="theme-init.js"></script>
   </head>
   <body>
     <!-- Start Screen -->

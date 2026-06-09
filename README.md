@@ -13,13 +13,19 @@ Implementación del clásico **Tetris** en JavaScript vanilla, usando HTML5 Canv
 - Tablero de **10 × 20** celdas.
 - Las **7 piezas estándar** (I, O, T, S, Z, J, L) con colores diferenciados.
 - **Rotación** con *wall kicks* (±1, ±2 columnas para rotar cerca de paredes).
-- **Soft drop** (bajada acelerada) y **Hard drop** (caída instantánea).
+- **Soft drop** (bajada acelerada) y **Hard drop** (caída instantánea, también con clic de mouse).
 - **Pieza fantasma** (*ghost piece*): muestra dónde aterrizará la pieza.
 - **Vista previa** de la siguiente pieza.
 - **Selector de skins** para bloques (**Pastel**, **Arcade** y **Glass**).
 - **Sistema de puntuación** clásico (100 / 300 / 500 / 800 × nivel).
 - **Niveles** que suben cada 10 líneas y aceleran la caída.
+- **Cuenta regresiva 3-2-1** antes de iniciar cada partida.
 - **Pausa** y **Game Over** con opción de reinicio.
+- **Tabla de high scores** con entrada de nombre, persistida en `localStorage`.
+- **Audio**: efectos de sonido y música de fondo sintetizada (menú y gameplay).
+- **Control de volumen** y **silenciador** en el menú de pausa.
+- **Modo claro / oscuro** (toggle, persistido en `localStorage`).
+- **Modo freeze**: congela el juego sin mostrar el menú de pausa.
 
 ---
 
@@ -54,14 +60,15 @@ Luego abre `http://localhost:8000` en el navegador.
 
 ## Controles
 
-| Tecla         | Acción                             |
-| ------------- | ---------------------------------- |
-| `←` / `→`    | Mover horizontalmente              |
-| `↑` o `X`    | Rotar en sentido horario           |
-| `↓`           | Soft drop (bajar más rápido)       |
-| `Espacio`     | Hard drop (caída instantánea)      |
-| `P`           | Pausar / reanudar                  |
-| `Enter`       | Reiniciar (en Game Over)           |
+| Tecla             | Acción                             |
+| ----------------- | ---------------------------------- |
+| `←` / `→`        | Mover horizontalmente              |
+| `↑`               | Rotar en sentido horario           |
+| `↓`               | Soft drop (bajar más rápido)       |
+| `Espacio`         | Hard drop (caída instantánea)      |
+| Clic en tablero   | Hard drop (caída instantánea)      |
+| `P` / `Escape`    | Pausar / reanudar                  |
+| `Enter`           | Reiniciar (en Game Over)           |
 
 ---
 
@@ -69,9 +76,11 @@ Luego abre `http://localhost:8000` en el navegador.
 
 ```
 tetris/
-├── index.html    # Estructura del DOM y canvas
-├── style.css     # Estilos (dark retro arcade theme)
-├── game.js       # Lógica completa del juego
+├── index.html       # Estructura del DOM y canvas
+├── style.css        # Estilos (dark retro arcade theme)
+├── theme-init.js    # Aplica el tema guardado antes del primer render (evita flash)
+├── audio.js         # Motor de audio: SFX y música sintetizada (Web Audio API)
+├── game.js          # Lógica completa del juego
 └── README.md
 ```
 
@@ -94,7 +103,7 @@ Estética *dark retro arcade*:
 - Grid de fondo sutil.
 
 ### `game.js`
-Contiene toda la lógica (~300 líneas):
+Contiene toda la lógica (~1 400 líneas):
 
 | Función         | Responsabilidad                                     |
 |-----------------|-----------------------------------------------------|
@@ -149,9 +158,7 @@ Parámetros fáciles de ajustar en `game.js`:
 ## Ideas para mejorar
 
 - [ ] Soporte táctil (swipe) para móviles
-- [ ] Efectos de sonido
 - [ ] Animación de flash al eliminar líneas
-- [ ] Sistema de high scores (localStorage)
 - [ ] Rotación en sentido antihorario (`Z`)
 - [ ] Hold piece (guardar pieza actual)
 - [ ] Modo multijugador

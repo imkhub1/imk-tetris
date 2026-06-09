@@ -29,7 +29,7 @@ Single-file game logic in `game.js` (~460 lines, vanilla JS + Canvas 2D API). No
 1. Accumulates `dt`; when `accumulated >= dropInterval` → auto-drop or `lockPiece()`
 2. Calls `draw()` every frame: grid → locked blocks → ghost → active piece
 
-**Piece representation**: each piece is a square matrix of integers matching COLORS index. Rotation is pure matrix math (`rotateCW`), wall kicks try offsets `[0, ±1, ±2]`.
+**Piece representation**: each piece is a square matrix of integers (1-7) indexing the active skin's palette. Rotation is pure matrix math (`rotateCW`), wall kicks try offsets `[0, ±1, ±2]`.
 
 **Canvas layout**:
 - `#board` — 300×600 px (10 cols × 20 rows × 30 px/block)

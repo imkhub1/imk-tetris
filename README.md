@@ -80,15 +80,17 @@ Then open `http://localhost:8000` in the browser.
 
 ## Controls
 
-| Key               | Action                             |
-| ----------------- | ---------------------------------- |
-| `←` / `→`        | Move horizontally                  |
-| `↑`               | Rotate clockwise                   |
-| `↓`               | Soft drop (fall faster)            |
-| `Space`           | Hard drop (instant drop)           |
-| Click on board    | Hard drop (instant drop)           |
-| `P` / `Escape`    | Pause / resume                     |
-| `Enter`           | Restart (on Game Over)             |
+| Key                     | Action                             |
+| ----------------------- | ---------------------------------- |
+| `←` / `→` · `A` / `D`   | Move horizontally                  |
+| `↑` / `W` · Right-click | Rotate clockwise                   |
+| `↓` / `S`               | Soft drop (fall faster)            |
+| `Space` · Left-click    | Hard drop (instant drop)           |
+| `F`                     | Freeze (test toggle)               |
+| `P` / `Esc` · Middle-click | Pause / resume                  |
+| `Enter`                 | Start · Pause · Restart (on Game Over) |
+
+> The pause menu also lets you pick a **starting level** (1–10) before the next game.
 
 ---
 
@@ -169,7 +171,7 @@ Easy-to-adjust parameters in `game.js`:
 | `COLS`         | Board columns                              | `10`                  |
 | `ROWS`         | Board rows                                 | `20`                  |
 | `BLOCK`        | Cell size in px                            | `30`                  |
-| `COLORS`       | Color palette per piece type               | 7 neon colors         |
+| `SKINS`        | Per-skin color palette per piece type      | Pastel / Arcade / Glass |
 | `LINE_SCORES`  | Points for 1-4 lines cleared               | `[0,100,300,500,800]` |
 
 > If you change `COLS`, `ROWS` or `BLOCK`, also update `width`/`height` on `<canvas id="board">` in `index.html`.
@@ -196,4 +198,4 @@ Easy-to-adjust parameters in `game.js`:
 
 ## License
 
-Free to use for educational and practice purposes.
+Released under the [MIT License](LICENSE).

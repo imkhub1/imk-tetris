@@ -92,6 +92,7 @@ Luego abre `http://localhost:8000` en el navegador.
 
 ```
 tetris/
+├── assets/          # Screenshots y GIFs para README
 ├── index.html       # Estructura del DOM y canvas
 ├── style.css        # Estilos (dark retro arcade theme)
 ├── theme-init.js    # Aplica el tema guardado antes del primer render (evita flash)

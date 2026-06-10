@@ -19,9 +19,13 @@
 
 </div>
 
+<div align="center">
+
 | Start screen | Gameplay | Game Over |
 |:---:|:---:|:---:|
 | <img src="assets/start-screen.jpg" width="220" alt="Start screen"> | <img src="assets/gameplay.gif" width="220" alt="Gameplay"> | <img src="assets/game-over.jpg" width="220" alt="Game Over"> |
+
+</div>
 
 ## Features
 

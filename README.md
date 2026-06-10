@@ -1,11 +1,19 @@
-# Tetris
+# 🎮 Tetris
 
 > Classic Tetris in vanilla JavaScript — Canvas 2D rendering, synthesized Web Audio, no dependencies, no build step.
+
+🌐 [Leer en español](README.es.md)
 
 <div align="center">
 
 [![▶ PLAY NOW](https://img.shields.io/badge/▶%20%20PLAY%20NOW-7eff6e?style=for-the-badge&labelColor=0d1117&color=7eff6e&logoColor=7eff6e)](https://imkhub1.github.io/imk-tetris/)
+
+</div>
+
+<div align="center">
+
 ![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-orange)
+![CSS3](https://img.shields.io/badge/CSS3-blueviolet)
 ![JavaScript Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 

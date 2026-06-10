@@ -25,9 +25,13 @@ Tetris clásico en JavaScript puro, con Canvas 2D y Web Audio API. Sin dependenc
 
 > 💡 **Sin instalación** → haz clic en el badge verde para jugar en el navegador.
 
+<div align="center">
+
 | Pantalla de inicio | Gameplay | Game Over |
 |:---:|:---:|:---:|
 | <img src="assets/start-screen.jpg" width="220" alt="Pantalla de inicio"> | <img src="assets/gameplay.gif" width="220" alt="Gameplay"> | <img src="assets/game-over.jpg" width="220" alt="Game Over"> |
+
+</div>
 
 ---
 

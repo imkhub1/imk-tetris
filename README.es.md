@@ -2,6 +2,8 @@
 
 Tetris clásico en JavaScript puro, con Canvas 2D y Web Audio API. Sin dependencias, sin bundler: abre y juega.
 
+🌐 [Read in English](README.md)
+
 <div align="center">
 
 [![▶ JUGAR AHORA](https://img.shields.io/badge/▶%20%20JUGAR%20AHORA-7eff6e?style=for-the-badge&labelColor=0d1117&color=7eff6e&logoColor=7eff6e)](https://imkhub1.github.io/imk-tetris/)
@@ -13,6 +15,7 @@ Tetris clásico en JavaScript puro, con Canvas 2D y Web Audio API. Sin dependenc
 ![HTML5 Canvas](https://img.shields.io/badge/HTML5-Canvas-orange)
 ![CSS3](https://img.shields.io/badge/CSS3-blueviolet)
 ![JavaScript Vanilla](https://img.shields.io/badge/JavaScript-Vanilla-yellow)
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
 
 </div>
 
@@ -104,7 +107,7 @@ imk-tetris/
 ├── theme-init.js    # Aplica el tema guardado antes del primer render
 ├── audio.js         # Motor de audio: SFX y música sintetizada (Web Audio API)
 ├── game.js          # Lógica completa del juego (~460 líneas)
-└── README.md
+└── tests/           # Tests unitarios con Jest
 ```
 
 ---
@@ -119,13 +122,19 @@ Parámetros fáciles de ajustar en `game.js`:
 | `ROWS`         | Filas del tablero                           | `20`                  |
 | `BLOCK`        | Tamaño de celda en px                       | `30`                  |
 | `SKINS`        | Paleta de colores por skin y pieza          | Pastel / Arcade / Glass |
-| `LINE_SCORES`  | Puntos por 1-4 líneas borradas              | `[0,100,500,800]`  |
+| `LINE_SCORES`  | Puntos por 1-4 líneas borradas              | `[0,100,300,500,800]`  |
 
 > Si cambias `COLS`, `ROWS` o `BLOCK`, actualiza también `width`/`height` en `<canvas id="board">` dentro de `index.html`.
 
 ---
 
 ## Para contribuir
+
+```bash
+npm install       # instalar dependencias de desarrollo (jest, eslint)
+npm test          # ejecutar tests unitarios
+npm run lint      # lint con eslint
+```
 
 Consulta el código fuente — `game.js` contiene la lógica del juego y `audio.js` el motor de audio. Reporta issues o abre un PR en el repositorio.
 

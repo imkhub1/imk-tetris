@@ -1377,6 +1377,12 @@ function updateSoundToggleButton() {
 
 function handleSoundToggle() {
   Sfx.unlock();
+  // First interaction on start screen: music hasn't started yet due to autoplay
+  // policy. Just unlock and let it play — don't toggle mute.
+  if (!startScreen.classList.contains('hidden') && !Sfx.isMenuMusicOn() && !Sfx.isMuted()) {
+    Sfx.startMenuMusic();
+    return;
+  }
   const nowMuted = Sfx.toggleMute();
   updateSoundToggleButton();
   if (!nowMuted) Sfx.play('uiclick'); // confirm with a blip when re-enabling
@@ -1543,6 +1549,22 @@ btnLevelInc.addEventListener('click', () => {
 // ── Boot ──────────────────────────────────────────────────────
 updateStartLevelDisplay();
 showStartScreen();
+
+// Ensure menu music starts on the very first user gesture (browser autoplay
+// policy blocks sound until a trusted event). Re-requesting after unlock
+// handles the race where context.resume() resolves after the event.
+(function armMenuMusicOnFirstGesture() {
+  const handler = () => {
+    Sfx.unlock();
+    setTimeout(() => {
+      if (!startScreen.classList.contains('hidden') && !Sfx.isMenuMusicOn()) {
+        Sfx.startMenuMusic();
+      }
+    }, 0);
+  };
+  ['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
+    document.addEventListener(ev, handler, { once: true, passive: true }));
+})();
 
 // Exported for unit testing in Node/Jest. Not part of the browser API.
 if (typeof module !== 'undefined' && module.exports) {
